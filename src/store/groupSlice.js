@@ -117,19 +117,12 @@ const initialState = {
             ]
         }
     ],
-    selectedGroup: null,
 }
 
 const groupSlice = createSlice({
     name: 'groups',
     initialState,
     reducers: {
-        selectGroup: (state, action) => {
-            state.selectedGroup = state.groups.find(g => g.id === action.payload) || null
-        },
-        clearSelectedGroup: (state) => {
-            state.selectedGroup = null
-        },
         likeGroupPost: (state, action) => {
             const { postId } = action.payload
             state.groups.forEach(g => {
@@ -140,11 +133,10 @@ const groupSlice = createSlice({
     }
 })
 
-export const { selectGroup, clearSelectedGroup, likeGroupPost } = groupSlice.actions
+export const { likeGroupPost } = groupSlice.actions
 
 // Selectors
 export const selectAllGroups = (state) => state.groups.groups
-export const selectSelectedGroup = (state) => state.groups.selectedGroup
 export const selectAllGroupPosts = (state) =>
     state.groups.groups.flatMap(g => g.posts)
 

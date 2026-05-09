@@ -115,6 +115,66 @@ const initialState = {
                     tags: ["real estate", "new project"]
                 }
             ]
+        },
+        {
+            id: 4,
+            name: "AgroTech Innovators",
+            category: "Agriculture",
+            founded: "2021",
+            revenue: "৳85L",
+            investors: 5,
+            avatar: "/grp_agro.webp",
+            cover: "/grp_agro_cover.webp",
+            description: "Pioneering IoT solutions for modern agriculture in Bangladesh.",
+            posts: []
+        },
+        {
+            id: 5,
+            name: "Urban Living Real Estate",
+            category: "Real Estate",
+            founded: "2012",
+            revenue: "৳12Cr",
+            investors: 35,
+            avatar: "/grp_realestate.webp",
+            cover: "/grp_realestate_cover.webp",
+            description: "Premium residential developments focusing on sustainable urban living.",
+            posts: []
+        },
+        {
+            id: 6,
+            name: "FutureTech Robotics",
+            category: "Technology",
+            founded: "2022",
+            revenue: "৳45L",
+            investors: 3,
+            avatar: "/grp_tech.webp",
+            cover: "/grp_tech_cover.webp",
+            description: "Specializing in industrial automation and robotic solutions.",
+            posts: []
+        },
+        {
+            id: 7,
+            name: "PureFlow Solutions",
+            category: "Environment",
+            founded: "2019",
+            revenue: "৳1.8Cr",
+            investors: 15,
+            avatar: "/about_platform.webp",
+            cover: "/about_platform.webp",
+            description: "Providing clean and affordable water solutions for rural communities.",
+            posts: []
+        },
+        {
+            id: 8,
+            name: "EcoFuel Dynamics",
+            category: "Energy",
+            founded: "2020",
+            revenue: "৳2.1Cr",
+            investors: 10,
+            avatar: "/about_hero.webp",
+            cover: "/about_hero.webp",
+            description: "Converting agricultural waste into sustainable biofuel solutions.",
+            posts: []
         }
     ],
     selectedCompany: null,

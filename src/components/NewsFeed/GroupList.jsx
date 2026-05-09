@@ -4,8 +4,9 @@ import { Search, Users, ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import NewsNav from './NewsNav';
 import { motion } from 'framer-motion';
+import { slugify } from '../../lib/slugify';
 
-const GroupList = () => {
+const GroupList = ({ viewMode = 'full' }) => {
   const groups = useSelector(state => state.groups.groups);
   const [search, setSearch] = useState('');
 
@@ -16,9 +17,10 @@ const GroupList = () => {
 
   return (
     <>
-    <NewsNav />
+    {viewMode === 'full' && <NewsNav />}
     <div className="w-full min-h-screen bg-[#F9FAFB] pt-20 pb-32 px-4 md:px-16">
       <div className="max-w-7xl mx-auto">
+        {viewMode === 'full' && (
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -48,6 +50,7 @@ const GroupList = () => {
             />
           </div>
         </motion.div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {filteredGroups.map((group, idx) => (
@@ -77,7 +80,7 @@ const GroupList = () => {
                 {group.description}
               </p>
               
-              <Link to={`/news/groups/${group.id}`} className="flex items-center justify-center gap-3 w-full py-5 bg-slate-50 hover:bg-slate-900 text-slate-400 hover:text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl transition-all duration-300 shadow-sm border border-slate-100">
+              <Link to={`/groups/${slugify(group.name)}`} className="flex items-center justify-center gap-3 w-full py-5 bg-slate-50 hover:bg-slate-900 text-slate-400 hover:text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl transition-all duration-300 shadow-sm border border-slate-100">
                 Enter Group Room
                 <ArrowUpRight size={18} />
               </Link>

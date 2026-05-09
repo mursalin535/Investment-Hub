@@ -10,6 +10,7 @@ export default function Nav({ children }) {
     { name: "About", path: "/about" },
     { name: "News Feed", path: "/newsfeed" },
     { name: "Investment", path: "/investment" },
+    {name:"Market",path:'/market'}
   ];
 
   return (

@@ -158,7 +158,7 @@ export default function Hero() {
                                 animate={{ x: 0, opacity: 1, rotate: 12, scale: 1 }}
                                 transition={{ delay: 0.5, duration: 1.2, type: "spring" }}
                                 src={Heading[index].img2}
-                                className="absolute right-[5%] md:right-[15%] top-[-30%] md:top-[-20%] w-24 h-24 md:w-44 md:h-44 object-cover rounded-2xl md:rounded-3xl shadow-2xl border-4 border-white z-30"
+                                className="absolute right-[5%] md:left-[15%] top-[-30%] md:top-[-20%] w-24 h-24 md:w-44 md:h-44 object-cover rounded-2xl md:rounded-3xl shadow-2xl border-4 border-white z-30"
                             />
 
                             <h1 className='text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-bold tracking-tighter text-gray-800 flex flex-row items-center gap-2 md:gap-4 text-center'>

@@ -3,8 +3,9 @@ import { useSelector } from 'react-redux';
 import { Search, Building2, TrendingUp, ArrowRight, BarChart3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { slugify } from '../../lib/slugify';
 
-const CompanyList = () => {
+const CompanyList = ({ viewMode = 'full' }) => {
   const companies = useSelector(state => state.companies.companies);
   const [search, setSearch] = useState('');
 
@@ -16,6 +17,7 @@ const CompanyList = () => {
   return (
     <div className="w-full min-h-screen bg-[#F9FAFB] pt-20 pb-32 px-4 md:px-16">
       <div className="max-w-7xl mx-auto">
+        {viewMode === 'full' && (
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -45,6 +47,7 @@ const CompanyList = () => {
             />
           </div>
         </motion.div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {filteredCompanies.map((company, idx) => (
@@ -85,7 +88,7 @@ const CompanyList = () => {
                     Active Portfolio
                   </p>
                 </div>
-                <Link to={`/news/companies/${company.id}`} className="w-14 h-14 bg-slate-900 text-white rounded-2xl flex items-center justify-center hover:bg-emerald-500 hover:rotate-45 transition-all duration-500 shadow-lg">
+                <Link to={`/companies/${slugify(company.name)}`} className="w-14 h-14 bg-slate-900 text-white rounded-2xl flex items-center justify-center hover:bg-emerald-500 hover:rotate-45 transition-all duration-500 shadow-lg">
                   <ArrowRight size={24} />
                 </Link>
               </div>

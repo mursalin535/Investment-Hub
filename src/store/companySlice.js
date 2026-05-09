@@ -117,19 +117,12 @@ const initialState = {
             ]
         }
     ],
-    selectedCompany: null,
 }
 
 const companySlice = createSlice({
     name: 'companies',
     initialState,
     reducers: {
-        selectCompany: (state, action) => {
-            state.selectedCompany = state.companies.find(c => c.id === action.payload) || null
-        },
-        clearSelectedCompany: (state) => {
-            state.selectedCompany = null
-        },
         likeCompanyPost: (state, action) => {
             const { postId } = action.payload
             state.companies.forEach(c => {
@@ -140,11 +133,10 @@ const companySlice = createSlice({
     }
 })
 
-export const { selectCompany, clearSelectedCompany, likeCompanyPost } = companySlice.actions
+export const { likeCompanyPost } = companySlice.actions
 
 // Selectors
 export const selectAllCompanies = (state) => state.companies.companies
-export const selectSelectedCompany = (state) => state.companies.selectedCompany
 export const selectAllCompanyPosts = (state) =>
     state.companies.companies.flatMap(c => c.posts)
 

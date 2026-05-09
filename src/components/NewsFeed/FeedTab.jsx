@@ -1,97 +1,20 @@
 import { useSelector, useDispatch } from 'react-redux'
-import {
-    TrendingUp, Users, Building2, Newspaper,
-    Search, Bell, Filter, Plus, Flame
-} from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { TrendingUp, Users, Search, Filter, Flame } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate, useLocation, Routes, Route, NavLink, Outlet } from 'react-router-dom'
-
-import { selectFilteredPosts, setActiveFilter, setSearchQuery,
-         selectActiveFilter, selectSearchQuery } from '../../redux/slices/postSlice'
+import { useNavigate } from 'react-router-dom'
+import {
+    selectFilteredPosts,
+    setActiveFilter,
+    selectActiveFilter,
+    selectSearchQuery,
+} from '../../redux/slices/postSlice'
 import { selectTrendingNews } from '../../redux/slices/newsSlice'
 import { selectAllGroups } from '../../redux/slices/groupSlice'
-
 import PostCard from './PostCard'
-import GroupPage from './GroupPage'
-import CompanyPage from './CompanyPage'
-import NewsPage from './NewsPage'
 
 const filters = ['all', 'profit', 'funding', 'contract', 'recruitment', 'question', 'complaint']
 
-const tabs = [
-    { id: 'feed',      label: 'Feed',      icon: TrendingUp,  path: '/newsfeed/feed' },
-    { id: 'groups',    label: 'Groups',    icon: Users,       path: '/newsfeed/groups' },
-    { id: 'companies', label: 'Companies', icon: Building2,   path: '/newsfeed/companies' },
-    { id: 'news',      label: 'News',      icon: Newspaper,   path: '/newsfeed/news' },
-]
-
-// ─── Top nav bar (shared across all tabs) ────────────────────────────────────
-function NewsfeedNav() {
-    const dispatch    = useDispatch()
-    const navigate    = useNavigate()
-    const location    = useLocation()
-    const searchQuery = useSelector(selectSearchQuery)
-
-    const activeTabId = tabs.find(t => location.pathname.startsWith(t.path))?.id ?? 'feed'
-
-    return (
-        <motion.div
-            initial={{ y: -100 }}
-            animate={{ y: 0 }}
-            className="sticky top-0 z-50 w-full bg-white border-b border-slate-100 px-4 md:px-10 py-3"
-        >
-            <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2 shrink-0">
-                    <TrendingUp size={20} className="text-emerald-500" />
-                    <span className="font-black text-slate-800 text-lg">Investment Feed</span>
-                </div>
-
-                <div className="flex-1 max-w-md relative">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" />
-                    <input
-                        type="text"
-                        placeholder="Search posts, groups, companies..."
-                        value={searchQuery}
-                        onChange={e => dispatch(setSearchQuery(e.target.value))}
-                        className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-full text-sm text-slate-600 placeholder:text-slate-300 focus:outline-none focus:border-emerald-200 focus:bg-white transition-all"
-                    />
-                </div>
-
-                <div className="flex items-center gap-3 shrink-0">
-                    <button className="relative p-2 hover:bg-slate-50 rounded-full transition-colors">
-                        <Bell size={18} className="text-slate-400" />
-                        <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-                    </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black uppercase tracking-widest rounded-full transition-colors">
-                        <Plus size={14} /> Post
-                    </button>
-                </div>
-            </div>
-
-            {/* Tab pills */}
-            <div className="max-w-7xl mx-auto flex items-center gap-1 mt-3 overflow-x-auto pb-1">
-                {tabs.map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => navigate(tab.path)}
-                        className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                            activeTabId === tab.id
-                                ? 'bg-emerald-500 text-white'
-                                : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'
-                        }`}
-                    >
-                        <tab.icon size={12} />
-                        {tab.label}
-                    </button>
-                ))}
-            </div>
-        </motion.div>
-    )
-}
-
-// ─── Feed tab ─────────────────────────────────────────────────────────────────
-function FeedTab() {
+export default function FeedTab() {
     const dispatch      = useDispatch()
     const navigate      = useNavigate()
     const filteredPosts = useSelector(selectFilteredPosts)
@@ -102,7 +25,8 @@ function FeedTab() {
 
     return (
         <div className="flex flex-col lg:flex-row gap-6">
-            {/* Posts column */}
+
+            {/* ── Posts column ───────────────────────────────────────────── */}
             <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -149,8 +73,9 @@ function FeedTab() {
                 </AnimatePresence>
             </motion.div>
 
-            {/* Sidebar */}
+            {/* ── Sidebar ────────────────────────────────────────────────── */}
             <div className="w-full lg:w-80 flex flex-col gap-5 shrink-0">
+
                 {/* Trending news */}
                 <motion.div
                     initial={{ opacity: 0, x: 20 }}
@@ -229,28 +154,7 @@ function FeedTab() {
                         View All Groups →
                     </button>
                 </motion.div>
-            </div>
-        </div>
-    )
-}
 
-// ─── Root layout wrapper ───────────────────────────────────────────────────────
-export default function Newsfeed() {
-    return (
-        <div className="w-full min-h-screen bg-[#F9FAFB]">
-            <NewsfeedNav />
-            <div className="max-w-7xl mx-auto px-4 md:px-10 py-6">
-                <AnimatePresence mode="wait">
-                    <Routes>
-                        <Route index element={<FeedTab />} />
-                        <Route path="feed" element={<FeedTab />} />
-                        <Route path="groups" element={<GroupPage />} />
-                        <Route path="groups/:groupName" element={<GroupPage />} />
-                        <Route path="companies" element={<CompanyPage />} />
-                        <Route path="companies/:companyName" element={<CompanyPage />} />
-                        <Route path="news" element={<NewsPage />} />
-                    </Routes>
-                </AnimatePresence>
             </div>
         </div>
     )

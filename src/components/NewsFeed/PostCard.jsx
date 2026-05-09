@@ -1,7 +1,9 @@
 import { useDispatch, useSelector } from 'react-redux'
 import { toggleLikePost, toggleSavePost,
          selectLikedPosts, selectSavedPosts } from '../../redux/slices/postSlice'
+import { selectAllUsers } from '../../redux/slices/userSlice'
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import {
     Heart, MessageCircle, Share2, Bookmark,
     MoreHorizontal, ChevronRight, TrendingUp,
@@ -22,11 +24,21 @@ export const typeConfig = {
 
 export default function PostCard({ post }) {
     const dispatch   = useDispatch()
+    const navigate   = useNavigate()
     const likedPosts = useSelector(selectLikedPosts)
     const savedPosts = useSelector(selectSavedPosts)
+    const allUsers   = useSelector(selectAllUsers)
+
+    // Find the user ID by name (temporary logic as requested)
+    const authorUser = allUsers.find(u => u.name === post.author)
+    const userId = authorUser ? authorUser.id : 'u1'
 
     const isLiked = likedPosts.includes(post.id)
     const isSaved = savedPosts.includes(post.id)
+
+    const handleUserClick = () => {
+        navigate(`/profile/${userId}`)
+    }
 
     const cfg  = typeConfig[post.type] || typeConfig.question
     const Icon = cfg.icon
@@ -43,7 +55,7 @@ export default function PostCard({ post }) {
             {/* Header */}
             <div className="flex items-start justify-between p-5 pb-3">
                 <div className="flex items-center gap-3">
-                    <div className="relative">
+                    <div className="relative cursor-pointer" onClick={handleUserClick}>
                         <motion.img
                             initial={{ scale: 0.8, opacity: 0 }}
                             whileInView={{ scale: 1, opacity: 1 }}
@@ -58,7 +70,12 @@ export default function PostCard({ post }) {
                     </div>
                     <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-black text-slate-800 text-sm heading">{post.author}</span>
+                            <span 
+                                className="font-black text-slate-800 text-sm heading cursor-pointer hover:text-emerald-500 transition-colors"
+                                onClick={handleUserClick}
+                            >
+                                {post.author}
+                            </span>
                             {post.groupName && (
                                 <>
                                     <ChevronRight size={12} className="text-slate-300" />

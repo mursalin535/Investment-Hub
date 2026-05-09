@@ -1,6 +1,4 @@
 import Hero from './Hero'
-import About  from './About';
-import Provide from "./Provide"
 import TopCompanies from './Top_companies';
 import Step from './Step';
 import Unite from './Unite';
@@ -16,12 +14,10 @@ function Home(){
                 <Hero/>
             </div>
 
-    <div className='w-full'>
-            <About/>
-        </div>
-           
+
 <div className='w-full'>
-    <Provide/>
+
+<Unite/>
 
 </div>
 
@@ -35,11 +31,7 @@ function Home(){
 
 </div>
 
-<div className='w-full'>
 
-<Unite/>
-
-</div>
 
 <div className='w-full'>
     <Rvw/>
