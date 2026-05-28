@@ -1,15 +1,21 @@
-// App.jsx
 import React, { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Lenis from "lenis";
 import './App.css';
-import Nav from "../Nav"
+import Nav from "../Nav";
+import { useDispatch } from 'react-redux';
+import { fetchCompanies } from './redux/slices/companySlice';
 
 function App() {
   const { pathname } = useLocation();
+  const dispatch = useDispatch();
+
+  // ✅ Fetch companies once on app load
+  useEffect(() => {
+    dispatch(fetchCompanies())
+  }, [dispatch])
 
   useEffect(() => {
-    // Initialize Lenis
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -35,18 +41,16 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Scroll to top whenever the route changes
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [pathname]);
 
   return (
     <>
-    <Nav>
-      <Outlet />
+      <Nav>
+        <Outlet />
       </Nav>
     </>
   );
 }
 
 export default App;
-

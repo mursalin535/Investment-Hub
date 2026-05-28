@@ -1,17 +1,52 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
+import { useSelector, useDispatch } from "react-redux";
+import { clearCookie } from "./src/store/CookieSlice";
 
 export default function Nav({ children }) {
   const [isOpen, setIsOpen] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  
+  const { loggedIn, user } = useSelector((state) => state.cookie);
 
-  const navLinks = [
-    { name: "Home", path: "/" },
-    { name: "About", path: "/about" },
-    { name: "News Feed", path: "/newsfeed" },
-    { name: "Investment", path: "/investment" },
-    {name:"Market",path:'/market'}
-  ];
+  // Determine navigation links based on login status and user role
+  const getNavLinks = () => {
+    if (!loggedIn) {
+      // Not logged in - only Home
+      return [
+        { name: "Home", path: "/" },
+        {name:"About", path:"/about"}
+      ];
+    }
+
+    // Logged in - always include these
+    const baseLinks = [
+      { name: "Home", path: "/" },
+      { name: "News Feed", path: "/newsfeed" },
+      { name: "Market", path: "/market" },
+      { name: "Deals", path: "/deals" },
+      {name:"Companies",path:'companies'},
+      {name:"Groups",path:'/groups'}
+    ];
+
+    // Add Investment only for businessman
+    if (user?.role === "businessman") {
+      baseLinks.splice(3, 0, { name: "Investment", path: "/investment" });
+    }
+
+    return baseLinks;
+  };
+
+  const navLinks = getNavLinks();
+
+  const handleLogout = () => {
+    dispatch(clearCookie());
+    console.log("User logged out");
+    setIsOpen(false);
+    navigate("/");
+  };
 
   return (
     <>
@@ -45,16 +80,31 @@ export default function Nav({ children }) {
 
             {/* Desktop Auth / Profile Links */}
             <div className="hidden lg:flex items-center gap-4">
-              <NavLink to="/profile" className={({ isActive }) => `heading text-white text-lg transition-colors hover:text-amber-200 ${isActive ? 'text-amber-400 border-b-2 border-amber-400' : ''}`}>
-                Profile
-              </NavLink>
-              <div className="h-6 w-[1px] bg-gray-700"></div>
-              <NavLink to="/login" className="heading text-white text-lg hover:text-amber-200 transition-colors">
-                Login
-              </NavLink>
-              <NavLink to="/signup" className="heading text-white text-lg bg-emerald-500 hover:bg-emerald-600 px-4 py-1 rounded-full transition-colors">
-                Sign Up
-              </NavLink>
+              {loggedIn ? (
+                <>
+                  <NavLink to="/profile" className={({ isActive }) => `heading text-white text-lg transition-colors hover:text-amber-200 ${isActive ? 'text-amber-400 border-b-2 border-amber-400' : ''}`}>
+                    Profile
+                  </NavLink>
+                  <div className="h-6 w-[1px] bg-gray-700"></div>
+                  <button 
+                    onClick={handleLogout}
+                    className="heading text-white text-lg hover:text-red-400 transition-colors flex items-center gap-2"
+                  >
+                    <LogOut size={20} />
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="h-6 w-[1px] bg-gray-700"></div>
+                  <NavLink to="/login" className="heading text-white text-lg hover:text-amber-200 transition-colors">
+                    Login
+                  </NavLink>
+                  <NavLink to="/signup" className="heading text-white text-lg bg-emerald-500 hover:bg-emerald-600 px-4 py-1 rounded-full transition-colors">
+                    Sign Up
+                  </NavLink>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -87,21 +137,34 @@ export default function Nav({ children }) {
                 </NavLink>
               ))}
               <div className="h-[1px] w-full bg-gray-800"></div>
-              <NavLink 
-                to="/profile" 
-                onClick={() => setIsOpen(false)}
-                className={({ isActive }) => `heading text-white text-xl transition-colors ${isActive ? 'text-amber-400 border-b-2 border-amber-400 w-fit' : ''}`}
-              >
-                Profile
-              </NavLink>
-              <div className="flex flex-col gap-4 pt-2">
-                <NavLink to="/login" onClick={() => setIsOpen(false)} className="heading text-white text-xl bg-slate-800 text-center py-2 rounded-xl border border-slate-700 transition-colors">
-                  Login
-                </NavLink>
-                <NavLink to="/signup" onClick={() => setIsOpen(false)} className="heading text-white text-xl bg-emerald-500 text-center py-2 rounded-xl transition-colors">
-                  Sign Up
-                </NavLink>
-              </div>
+              
+              {loggedIn ? (
+                <>
+                  <NavLink 
+                    to="/profile" 
+                    onClick={() => setIsOpen(false)}
+                    className={({ isActive }) => `heading text-white text-xl transition-colors ${isActive ? 'text-amber-400 border-b-2 border-amber-400 w-fit' : ''}`}
+                  >
+                    Profile
+                  </NavLink>
+                  <button 
+                    onClick={handleLogout}
+                    className="heading text-white text-xl bg-red-600 hover:bg-red-700 text-center py-2 rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    <LogOut size={20} />
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <NavLink to="/login" onClick={() => setIsOpen(false)} className="heading text-white text-xl bg-slate-800 text-center py-2 rounded-xl border border-slate-700 transition-colors">
+                    Login
+                  </NavLink>
+                  <NavLink to="/signup" onClick={() => setIsOpen(false)} className="heading text-white text-xl bg-emerald-500 text-center py-2 rounded-xl transition-colors">
+                    Sign Up
+                  </NavLink>
+                </div>
+              )}
             </div>
           </div>
         )}

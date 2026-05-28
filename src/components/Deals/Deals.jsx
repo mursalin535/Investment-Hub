@@ -1,4 +1,4 @@
-export default function PostCard({post}){
+export default function Deals() {
     return(
         <>
         

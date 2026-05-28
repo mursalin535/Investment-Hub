@@ -2,23 +2,23 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
-import { RouterProvider, createBrowserRouter, Navigate } from 'react-router-dom'
+import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { Provider } from 'react-redux'
 import store from './redux/store'
+import { HeroUIProvider } from "@heroui/react";
 
 import Home        from './components/Home/Home.jsx'
 import About       from './components/About/About.jsx'
 import Investment  from './components/Investment/Investment.jsx'
-import Newsfeed    from './components/NewsFeed/Newsfeed.jsx'
-import FeedTab     from './components/NewsFeed/FeedTab.jsx'
-import NewsPage    from './components/NewsFeed/NewsPage.jsx'
-import GroupPage   from './components/NewsFeed/GroupPage.jsx'
-import CompanyPage from './components/NewsFeed/CompanyPage.jsx'
+import Newsfeed    from './components/Newsfeed/Newsfeed.jsx'
 import Login       from './components/Auth/Login.jsx'
 import SignUp      from './components/Auth/SignUp.jsx'
 import Profile     from './components/Profile/Profile.jsx'
 import Market      from './components/Market/Market.jsx'
-import Details      from './components/Market/Details.jsx'
+import Details     from './components/Market/Details.jsx'
+import Deals       from './components/Deals/Deals.jsx'
+import NotFound    from './components/NotFound/NotFound.jsx'
+import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute.jsx'
 
 const router = createBrowserRouter([
   {
@@ -26,43 +26,49 @@ const router = createBrowserRouter([
     element: <App />,
     children: [
       { index: true,        element: <Home /> },
-      { path: 'about',      element: <About /> },
-      { path: 'investment', element: <Investment /> },
+      { 
+        path: 'about',      
+        element:<About /> 
+      },
       { path: 'login',      element: <Login /> },
       { path: 'signup',     element: <SignUp /> },
-      { path: 'profile',    element: <Profile /> },
-      { path: 'profile/:userId', element: <Profile /> },
 
-      // ── Newsfeed layout shell (renders top nav + <Outlet>) ────────────────
+      // ── Protected Routes ────────────────────────────────────────────────
+      { 
+        path: 'profile',    
+        element: <ProtectedRoute element={<Profile />} allowedRoles={['investor', 'businessman']} /> 
+      },
+      { 
+        path: 'profile/:userId', 
+        element: <ProtectedRoute element={<Profile />} allowedRoles={['investor', 'businessman']} /> 
+      },
+
+      { 
+        path: 'investment', 
+        element: <ProtectedRoute element={<Investment />} allowedRoles={['businessman']} /> 
+      },
+
+      { 
+        path: 'market',                         
+        element: <ProtectedRoute element={<Market />} allowedRoles={['investor', 'businessman']} /> 
+      },
+      { 
+        path: 'details/:addId',                  
+        element: <ProtectedRoute element={<Details />} allowedRoles={['investor', 'businessman']} /> 
+      },
+
+      { 
+        path: 'deals',                            
+        element: <ProtectedRoute element={<Deals />} allowedRoles={['investor', 'businessman']} /> 
+      },
+
       {
         path: 'newsfeed',
-        element: <Newsfeed />,
-        children: [
-          // /newsfeed  →  redirect to feed
-          { index: true,                        element: <Navigate to="feed" replace /> },
-
-          // /newsfeed/feed
-          { path: 'feed',                       element: <FeedTab /> },
-
-          // /newsfeed/groups          (list)
-          // /newsfeed/groups/:groupName  (detail)
-          { path: 'groups',                     element: <GroupPage /> },
-          { path: 'groups/:groupName',          element: <GroupPage /> },
-
-          // /newsfeed/companies       (list)
-          // /newsfeed/companies/:companyName (detail)
-          { path: 'companies',                  element: <CompanyPage /> },
-          { path: 'companies/:companyName',     element: <CompanyPage /> },
-
-          // /newsfeed/news
-          { path: 'news',                       element: <NewsPage /> },
-        ]
-      },{
-        path:"/market",                         element:<Market/>
+        element: <Newsfeed />
       },
-      {
-        path:"/details/:addId",                  element:<Details/>
-      }
+
+      // ── 404 Catch-all (must be last) ────────────────────────────────────
+      { path: '*', element: <NotFound /> },
     ]
   }
 ])
@@ -70,7 +76,9 @@ const router = createBrowserRouter([
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Provider store={store}>
-      <RouterProvider router={router} />
+      <HeroUIProvider>
+        <RouterProvider router={router} />
+      </HeroUIProvider>
     </Provider>
   </StrictMode>
 )

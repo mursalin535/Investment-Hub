@@ -6,6 +6,7 @@ import postReducer from './slices/postSlice'
 import investmentReducer from './slices/investmentSlice'
 import userReducer from './slices/userSlice'
 import companyOwnerReducer from './slices/companyOwnerSlice'
+import cookieReducer from '../store/CookieSlice'
 
 const store = configureStore({
     reducer: {
@@ -16,6 +17,7 @@ const store = configureStore({
         investments: investmentReducer,
         user: userReducer,
         companyOwners: companyOwnerReducer,
+        cookie: cookieReducer,
     }
 })
 

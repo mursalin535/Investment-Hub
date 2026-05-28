@@ -9,15 +9,44 @@ import ProfileHero from './ProfileHero'
 import ProfileInfo from './ProfileInfo'
 import JoinedGroups from './JoinedGroups'
 import InvestmentPortfolio from './InvestmentPortfolio'
-import MyInsights from './MyInsights'
+
 
 export default function Profile() {
     const navigate = useNavigate()
     const { userId } = useParams()
     
-    // Default to 'u1' (Mehedi Hasan) if no ID provided (own profile)
-    const effectiveUserId = userId || 'u1'
-    const user = useSelector(state => selectUserById(state, effectiveUserId))
+    // Get logged-in user info from cookieSlice
+    const cookieUser = useSelector(state => state.cookie.user.userInfo)
+    
+    // Get user from userSlice if userId is provided
+    const reduxUser = useSelector(state => selectUserById(state, userId))
+
+    // Determine which user to display
+    // If no userId in params, or if userId matches logged-in user, use cookieUser
+    const isOwnProfile = !userId || (cookieUser && String(cookieUser.id) === String(userId))
+    const rawUser = isOwnProfile ? cookieUser : reduxUser
+
+    // Normalize user object to bridge differences between DB and Mock data
+    const user = rawUser ? {
+        ...rawUser,
+        id: rawUser.id,
+        name: rawUser.name,
+        email: rawUser.email,
+        // Map photo_url from DB to avatar, and prepend server URL if it's from DB
+        // Also handle potential path prefixes like 'uploads\' or 'uploads/' and strip them
+        avatar: rawUser.avatar || (rawUser.photo_url ? `http://localhost:5009/uploads/${rawUser.photo_url.split(/[\\\/]/).pop()}` : null),
+        // Normalize role (businessman/entrepreneur -> entrepreneur)
+        role: (rawUser.role === 'businessman' || rawUser.role === 'entrepreneur') ? 'entrepreneur' : 'investor',
+        location: rawUser.location || 'Dhaka, Bangladesh',
+        bio: rawUser.bio || 'Professional on Investment Hub, looking for growth opportunities.',
+        joinedDate: rawUser.joinedDate || 'Recent',
+        phone: rawUser.phone || 'Not provided',
+        stats: rawUser.stats || {
+            investments: rawUser.total_investment || 0,
+            following: 0,
+            insights: 0
+        }
+    } : null
 
     if (!user) {
         return (
@@ -76,7 +105,7 @@ export default function Profile() {
     return (
         <div className="min-h-screen bg-white pb-20 overflow-hidden">
             
-            <ProfileHero user={user} />
+            <ProfileHero user={user} isOwnProfile={isOwnProfile} />
 
             <div className="max-w-5xl mx-auto px-6 py-16 space-y-24">
                 
@@ -120,7 +149,7 @@ export default function Profile() {
                     </>
                 )}
 
-                <MyInsights myPosts={myPosts} />
+               
 
             </div>
         </div>

@@ -3,9 +3,7 @@ import { motion } from 'framer-motion'
 import { TrendingUp, DollarSign, Globe, Camera, Award, ShieldCheck } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 
-const ProfileHero = ({ user }) => {
-    const { userId } = useParams()
-    const isOwnProfile = !userId || userId === 'u1'
+const ProfileHero = ({ user, isOwnProfile }) => {
     const isOwner = user.role === 'entrepreneur'
 
     return (

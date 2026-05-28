@@ -1,32 +1,45 @@
 // src/pages/Login.jsx
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useDispatch } from 'react-redux'
+import { setCookie } from '../../store/CookieSlice'
+import Login_server  from '../../server/Login_server'
 import {
     TrendingUp, Eye, EyeOff, Mail, Lock,
-    User, Phone, Building2, ArrowRight,
-    ShieldCheck, CheckCircle2
+    ArrowRight, ShieldCheck, CheckCircle2
 } from 'lucide-react'
+import { dateInput } from '@heroui/react'
 
 export default function Login() {
-    const [mode, setMode] = useState('login') // 'login' | 'signup'
     const [showPass, setShowPass] = useState(false)
-    const [showConfirm, setShowConfirm] = useState(false)
-    const [role, setRole] = useState('investor') // 'investor' | 'business'
-    const [step, setStep] = useState(1) // signup step 1 or 2
+    const [role, setRole] = useState('investor')  // ✅ add role state
+    const dispatch = useDispatch()
+    const navigate = useNavigate()
 
-    const [form, setForm] = useState({
-        name: '', email: '', phone: '',
-        password: '', confirmPassword: '',
-        companyName: '', category: ''
-    })
+    const emailRef = useRef(null)
+    const passwordRef = useRef(null)
 
-    const handleInput = (e) => setForm({ ...form, [e.target.name]: e.target.value })
-
-    const categories = [
-        'Technology', 'Agriculture', 'Real Estate',
-        'Manufacturing', 'Healthcare', 'Retail', 'Other'
-    ]
+    const handleSignIn = (e) => {
+        e.preventDefault()
+        const email = emailRef.current.value
+        const password = passwordRef.current.value
+        const userData = JSON.stringify({ email, password, role })  // ✅ include role
+        Login_server(userData).then((data)=>{
+           if(data.success){
+    console.log(data.user)
+    dispatch(setCookie({ role: role, userInfo: data.user }))  // ✅ use selected role
+    navigate('/')
+    alert('Login successful! Welcome back, ' + data.user.name)      // ✅ alert
+}
+            else{
+                alert('Login failed: ' + data.message)
+            }
+        }).catch((err)=>{
+            alert('An error occurred during login. Please try again later.')
+            console.error('Login error:', err)
+        })
+    }
 
     return (
         <div className="w-full min-h-screen bg-[#F9FAFB] flex flex-col lg:flex-row">
@@ -136,35 +149,17 @@ export default function Login() {
 
                 <div className="w-full max-w-md">
 
-                    {/* Mode toggle */}
-                    <div className="flex bg-slate-100 rounded-2xl p-1 mb-8">
-                        {['login', 'signup'].map(m => (
-                            <button
-                                key={m}
-                                onClick={() => { setMode(m); setStep(1) }}
-                                className={`flex-1 py-2.5 rounded-xl text-sm font-black uppercase tracking-widest transition-all duration-300 ${
-                                    mode === m
-                                        ? 'bg-white text-slate-800 shadow-sm'
-                                        : 'text-slate-400 hover:text-slate-600'
-                                }`}
-                            >
-                                {m === 'login' ? 'Sign In' : 'Sign Up'}
-                            </button>
-                        ))}
-                    </div>
-
                     <AnimatePresence mode="wait">
 
                         {/* ── LOGIN FORM ── */}
-                        {mode === 'login' && (
-                            <motion.div
-                                key="login"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                transition={{ duration: 0.35 }}
-                                className="flex flex-col gap-6"
-                            >
+                        <motion.div
+                            key="login"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.35 }}
+                            className="flex flex-col gap-6"
+                        >
                                 <div className="flex flex-col gap-1">
                                     <h1 className="text-3xl font-black text-slate-800 heading tracking-tight">Welcome back</h1>
                                     <p className="text-slate-400 text-sm font-light">Sign in to your Investment Hub account</p>
@@ -179,9 +174,7 @@ export default function Login() {
                                             <Mail size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
                                             <input
                                                 type="email"
-                                                name="email"
-                                                value={form.email}
-                                                onChange={handleInput}
+                                                ref={emailRef}
                                                 placeholder="you@example.com"
                                                 className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/10 transition-all"
                                             />
@@ -198,9 +191,7 @@ export default function Login() {
                                             <Lock size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
                                             <input
                                                 type={showPass ? 'text' : 'password'}
-                                                name="password"
-                                                value={form.password}
-                                                onChange={handleInput}
+                                                ref={passwordRef}
                                                 placeholder="Enter your password"
                                                 className="w-full pl-11 pr-12 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/10 transition-all"
                                             />
@@ -214,10 +205,32 @@ export default function Login() {
                                         </div>
                                     </div>
 
+                                    {/* Account Type Selection */}
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Account Type</label>
+                                        <div className="flex gap-3">
+                                            <button 
+                                                type="button"
+                                                onClick={() => setRole('investor')}
+                                                className={`flex-1 py-3 rounded-xl border text-xs font-bold transition-all ${role === 'investor' ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}
+                                            >
+                                                Investor
+                                            </button>
+                                            <button 
+                                                type="button"
+                                                onClick={() => setRole('businessman')}
+                                                className={`flex-1 py-3 rounded-xl border text-xs font-bold transition-all ${role === 'businessman' ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}
+                                            >
+                                                Businessman
+                                            </button>
+                                        </div>
+                                    </div>
+
                                 </div>
 
                                 {/* Sign in button */}
                                 <motion.button
+                                    onClick={handleSignIn}
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
                                     className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-500/20"
@@ -250,285 +263,14 @@ export default function Login() {
                                 <p className="text-center text-slate-400 text-xs">
                                     Don't have an account?{' '}
                                     <button
-                                        onClick={() => setMode('signup')}
+                                        onClick={() => navigate('/signup')}
                                         className="text-emerald-600 font-black hover:underline"
                                     >
                                         Sign up free
                                     </button>
                                 </p>
                             </motion.div>
-                        )}
-
-                        {/* ── SIGNUP FORM ── */}
-                        {mode === 'signup' && (
-                            <motion.div
-                                key="signup"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                transition={{ duration: 0.35 }}
-                                className="flex flex-col gap-6"
-                            >
-                                <div className="flex flex-col gap-1">
-                                    <h1 className="text-3xl font-black text-slate-800 heading tracking-tight">Create account</h1>
-                                    <p className="text-slate-400 text-sm font-light">Join Investment Hub and start growing today</p>
-                                </div>
-
-                                {/* Step indicator */}
-                                <div className="flex items-center gap-3">
-                                    {[1, 2].map(s => (
-                                        <div key={s} className="flex items-center gap-2">
-                                            <div className={`w-7 h-7 rounded-full flex justify-center items-center text-xs font-black transition-all duration-300 ${
-                                                step >= s
-                                                    ? 'bg-emerald-500 text-white'
-                                                    : 'bg-slate-100 text-slate-400'
-                                            }`}>
-                                                {step > s ? <CheckCircle2 size={14} /> : s}
-                                            </div>
-                                            <span className={`text-xs font-bold ${step >= s ? 'text-slate-700' : 'text-slate-300'}`}>
-                                                {s === 1 ? 'Personal Info' : 'Account Setup'}
-                                            </span>
-                                            {s < 2 && <div className={`flex-1 h-px w-8 ${step > s ? 'bg-emerald-400' : 'bg-slate-200'}`} />}
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <AnimatePresence mode="wait">
-
-                                    {/* Step 1 */}
-                                    {step === 1 && (
-                                        <motion.div
-                                            key="step1"
-                                            initial={{ opacity: 0, x: 20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            exit={{ opacity: 0, x: -20 }}
-                                            transition={{ duration: 0.3 }}
-                                            className="flex flex-col gap-4"
-                                        >
-                                            {/* Role toggle */}
-                                            <div className="flex flex-col gap-1.5">
-                                                <label className="text-xs font-black text-slate-600 uppercase tracking-widest">I am a</label>
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    {[
-                                                        { id: 'investor', label: 'Investor', desc: 'I want to invest', icon: TrendingUp },
-                                                        { id: 'business', label: 'Business', desc: 'I need funding', icon: Building2 },
-                                                    ].map(r => (
-                                                        <button
-                                                            key={r.id}
-                                                            type="button"
-                                                            onClick={() => setRole(r.id)}
-                                                            className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-200 ${
-                                                                role === r.id
-                                                                    ? 'border-emerald-500 bg-emerald-50'
-                                                                    : 'border-slate-200 bg-white hover:border-slate-300'
-                                                            }`}
-                                                        >
-                                                            <div className={`w-10 h-10 rounded-xl flex justify-center items-center ${
-                                                                role === r.id ? 'bg-emerald-500' : 'bg-slate-100'
-                                                            }`}>
-                                                                <r.icon size={18} className={role === r.id ? 'text-white' : 'text-slate-400'} />
-                                                            </div>
-                                                            <div className="text-center">
-                                                                <p className={`text-sm font-black ${role === r.id ? 'text-emerald-700' : 'text-slate-700'}`}>{r.label}</p>
-                                                                <p className={`text-[10px] font-medium ${role === r.id ? 'text-emerald-500' : 'text-slate-400'}`}>{r.desc}</p>
-                                                            </div>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            {/* Full name */}
-                                            <div className="flex flex-col gap-1.5">
-                                                <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Full Name</label>
-                                                <div className="relative">
-                                                    <User size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
-                                                    <input
-                                                        type="text"
-                                                        name="name"
-                                                        value={form.name}
-                                                        onChange={handleInput}
-                                                        placeholder="Your full name"
-                                                        className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/10 transition-all"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {/* Phone */}
-                                            <div className="flex flex-col gap-1.5">
-                                                <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Phone Number</label>
-                                                <div className="relative">
-                                                    <Phone size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
-                                                    <input
-                                                        type="tel"
-                                                        name="phone"
-                                                        value={form.phone}
-                                                        onChange={handleInput}
-                                                        placeholder="+880 1XXX XXXXXX"
-                                                        className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/10 transition-all"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <motion.button
-                                                whileHover={{ scale: 1.02 }}
-                                                whileTap={{ scale: 0.98 }}
-                                                onClick={() => setStep(2)}
-                                                className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-500/20"
-                                            >
-                                                Continue <ArrowRight size={16} />
-                                            </motion.button>
-                                        </motion.div>
-                                    )}
-
-                                    {/* Step 2 */}
-                                    {step === 2 && (
-                                        <motion.div
-                                            key="step2"
-                                            initial={{ opacity: 0, x: 20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            exit={{ opacity: 0, x: -20 }}
-                                            transition={{ duration: 0.3 }}
-                                            className="flex flex-col gap-4"
-                                        >
-                                            {/* Email */}
-                                            <div className="flex flex-col gap-1.5">
-                                                <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Email Address</label>
-                                                <div className="relative">
-                                                    <Mail size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
-                                                    <input
-                                                        type="email"
-                                                        name="email"
-                                                        value={form.email}
-                                                        onChange={handleInput}
-                                                        placeholder="you@example.com"
-                                                        className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/10 transition-all"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {/* Business fields */}
-                                            {role === 'business' && (
-                                                <>
-                                                    <div className="flex flex-col gap-1.5">
-                                                        <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Company Name</label>
-                                                        <div className="relative">
-                                                            <Building2 size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
-                                                            <input
-                                                                type="text"
-                                                                name="companyName"
-                                                                value={form.companyName}
-                                                                onChange={handleInput}
-                                                                placeholder="Your company name"
-                                                                className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/10 transition-all"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex flex-col gap-1.5">
-                                                        <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Industry</label>
-                                                        <select
-                                                            name="category"
-                                                            value={form.category}
-                                                            onChange={handleInput}
-                                                            className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm text-slate-700 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/10 transition-all appearance-none cursor-pointer"
-                                                        >
-                                                            <option value="">Select industry...</option>
-                                                            {categories.map(c => (
-                                                                <option key={c} value={c}>{c}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                </>
-                                            )}
-
-                                            {/* Password */}
-                                            <div className="flex flex-col gap-1.5">
-                                                <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Password</label>
-                                                <div className="relative">
-                                                    <Lock size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
-                                                    <input
-                                                        type={showPass ? 'text' : 'password'}
-                                                        name="password"
-                                                        value={form.password}
-                                                        onChange={handleInput}
-                                                        placeholder="Create a strong password"
-                                                        className="w-full pl-11 pr-12 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/10 transition-all"
-                                                    />
-                                                    <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 transition-colors">
-                                                        {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            {/* Confirm password */}
-                                            <div className="flex flex-col gap-1.5">
-                                                <label className="text-xs font-black text-slate-600 uppercase tracking-widest">Confirm Password</label>
-                                                <div className="relative">
-                                                    <Lock size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
-                                                    <input
-                                                        type={showConfirm ? 'text' : 'password'}
-                                                        name="confirmPassword"
-                                                        value={form.confirmPassword}
-                                                        onChange={handleInput}
-                                                        placeholder="Confirm your password"
-                                                        className={`w-full pl-11 pr-12 py-3.5 bg-white border rounded-2xl text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 transition-all ${
-                                                            form.confirmPassword && form.password !== form.confirmPassword
-                                                                ? 'border-red-300 focus:border-red-400 focus:ring-red-400/10'
-                                                                : 'border-slate-200 focus:border-emerald-400 focus:ring-emerald-400/10'
-                                                        }`}
-                                                    />
-                                                    <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 transition-colors">
-                                                        {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
-                                                    </button>
-                                                </div>
-                                                {form.confirmPassword && form.password !== form.confirmPassword && (
-                                                    <p className="text-red-500 text-[11px] font-bold">Passwords do not match</p>
-                                                )}
-                                            </div>
-
-                                            {/* Terms */}
-                                            <p className="text-slate-400 text-[11px] leading-relaxed">
-                                                By creating an account you agree to our{' '}
-                                                <span className="text-emerald-600 font-bold cursor-pointer hover:underline">Terms of Service</span>
-                                                {' '}and{' '}
-                                                <span className="text-emerald-600 font-bold cursor-pointer hover:underline">Privacy Policy</span>.
-                                                All investments are legally documented.
-                                            </p>
-
-                                            <div className="flex gap-3">
-                                                <motion.button
-                                                    whileHover={{ scale: 1.02 }}
-                                                    whileTap={{ scale: 0.98 }}
-                                                    onClick={() => setStep(1)}
-                                                    className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black rounded-2xl transition-colors"
-                                                >
-                                                    Back
-                                                </motion.button>
-                                                <motion.button
-                                                    whileHover={{ scale: 1.02 }}
-                                                    whileTap={{ scale: 0.98 }}
-                                                    className="flex-1 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-500/20"
-                                                >
-                                                    Create Account <ArrowRight size={16} />
-                                                </motion.button>
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-
-                                {mode === 'signup' && step === 1 && (
-                                    <p className="text-center text-slate-400 text-xs">
-                                        Already have an account?{' '}
-                                        <button
-                                            onClick={() => setMode('login')}
-                                            className="text-emerald-600 font-black hover:underline"
-                                        >
-                                            Sign in
-                                        </button>
-                                    </p>
-                                )}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                        </AnimatePresence>
                 </div>
             </div>
         </div>

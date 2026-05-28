@@ -81,6 +81,9 @@ const postSlice = createSlice({
     name: 'posts',
     initialState,
     reducers: {
+        addPost: (state, action) => {
+            state.userPosts.unshift(action.payload)
+        },
         setActiveFilter: (state, action) => {
             state.activeFilter = action.payload
         },
@@ -113,6 +116,7 @@ const postSlice = createSlice({
 })
 
 export const {
+    addPost,
     setActiveFilter,
     setSearchQuery,
     toggleLikePost,
