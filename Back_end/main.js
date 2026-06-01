@@ -6,7 +6,8 @@ const path = require('path');
 const signup = require('./router/signup.js');
 const health = require('./router/health.js');
 const getcomp=require('./router/getcomp.js');
-const posts=require('./router/posts.js')
+const posts=require('./router/posts.js');
+const groups=require('./router/groups.js')
 
 // Middlewares
 app.use(cors());
@@ -21,6 +22,7 @@ app.use( health);
 app.use('/api', signup);
 app.use(getcomp);
 app.use(posts);
+app.use(groups);
 
 // Global Error Handler
 app.use((err, req, res, next) => {

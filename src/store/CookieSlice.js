@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-    loggedIn:true,
+    loggedIn: true,
     user: { 
         role: 'none',
         userInfo: null
@@ -25,4 +25,10 @@ const cookieSlice = createSlice({
 });
 
 export const { setCookie, clearCookie } = cookieSlice.actions;
+
+// ✅ Add selector instead of reducer
+export const getUser = (state) => state.cookie.user.userInfo;
+export const getRole = (state) => state.cookie.user.role;
+export const isLoggedIn = (state) => state.cookie.loggedIn;
+
 export default cookieSlice.reducer;
