@@ -30,16 +30,69 @@ class Groups_model {
         });
     }
 
- getByAdminId(id) {
-    return db.execute(`
-        SELECT * FROM investment_groups
-        WHERE admin_id = ?
-    `, [id]).then(([rows]) => {  // ✅ Fixed: rows not row
-        return rows[0];
-    }).catch((err) => {
-        console.log("Error in model:", err);
-    });
-}
+    getByAdminId(id) {
+        return db.execute(`
+            SELECT * FROM investment_groups
+            WHERE admin_id = ?
+        `, [id]).then(([rows]) => {
+            return rows;  // ✅ Return full array for proper length checking
+        }).catch((err) => {
+            console.log("Error in model:", err);
+            return [];
+        });
+    }
+
+    // ============================================
+    //         GET GROUPS BY MEMBER ID
+    // ============================================
+    getByMemberId(id) {
+        return db.execute(`
+            SELECT ig.* FROM investment_groups ig
+            INNER JOIN investors i ON ig.id = i.grp_id
+            WHERE i.id = ?
+        `, [id]).then(([rows]) => {
+            return rows;  // ✅ Return array of groups user is member of
+        }).catch((err) => {
+            console.log("Error fetching member groups:", err);
+            return [];
+        });
+    }
+
+    // ============================================
+    //         GET ALL MEMBERS IN A GROUP
+    // ============================================
+    getGroupMembers(groupId) {
+        return db.execute(`
+            SELECT id, name, email, phone, photo_url,
+                   total_investment, total_profit
+            FROM investors
+            WHERE grp_id = ?
+            ORDER BY name ASC
+        `, [groupId]).then(([rows]) => {
+            return rows || [];
+        }).catch((err) => {
+            console.log("Error fetching group members:", err);
+            return [];
+        });
+    }
+
+    // ============================================
+    //         GET GROUP ADMIN INFO
+    // ============================================
+    getGroupAdmin(groupId) {
+        return db.execute(`
+            SELECT id, name, email, phone, photo_url
+            FROM investors
+            WHERE id = (
+                SELECT admin_id FROM investment_groups WHERE id = ?
+            )
+        `, [groupId]).then(([rows]) => {
+            return rows ? rows[0] : null;
+        }).catch((err) => {
+            console.log("Error fetching group admin:", err);
+            return null;
+        });
+    }
 
 
     // ============================================

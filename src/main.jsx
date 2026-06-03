@@ -20,6 +20,8 @@ import Deals       from './components/Deals/Deals.jsx'
 import NotFound    from './components/NotFound/NotFound.jsx'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute.jsx'
 import Groups from './components/Groups,companise/Groups.jsx'
+import Your_group from './components/Groups,companise/Your_group.jsx'
+import Create_group from './components/Groups,companise/Create_group.jsx'
 
 const router = createBrowserRouter([
   {
@@ -70,7 +72,9 @@ const router = createBrowserRouter([
 
       // ── 404 Catch-all (must be last) ────────────────────────────────────
       { path: '*', element: <NotFound /> },
-      {path:'/groups',element:<Groups/>}
+      {path:'/groups',element:<Groups/>},
+      {path:'/your-groups',element:<Your_group/>},
+      {path:'/create-group',element:<Create_group/>}
     ]
   }
 ])
