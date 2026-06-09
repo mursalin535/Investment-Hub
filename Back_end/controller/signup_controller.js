@@ -28,9 +28,8 @@ const signup_controller = async (req, res) => {
         const { name, email, phone, password, role, companyName, valuation } = req.body;
         const files = req.files;
 
-        // ✅ FIX 2: Check BOTH tables for duplicate email
-        const existingInvestor  = await SignupModel.findUserByEmail(email);
-        const existingBusiness  = await BusinessModel.findUserByEmail(email);
+        const existingInvestor = await SignupModel.findUserByEmail(email);
+        const existingBusiness = await BusinessModel.findUserByEmail(email);
         if (existingInvestor || existingBusiness) {
             return res.status(409).json({ success: false, message: 'This email is already registered.' });
         }
@@ -46,16 +45,15 @@ const signup_controller = async (req, res) => {
         if (role === 'businessman') {
             console.log('🏢 Processing Businessman registration...');
 
-            // Create company first
-            const companyResult = await CompanyModel.createCompany({
-                name: companyName,
+            // Step 1: Create company WITHOUT admin_id (businessman doesn't exist yet)
+            const newCompanyId = await CompanyModel.createCompany({
+                name:      companyName,
                 valuation,
                 photo_url: companyLogo
             });
-            const newCompanyId = companyResult.insertId;
             console.log(`✅ Company created with ID: ${newCompanyId}`);
 
-            // ✅ FIX 3: Pass company_photo to createBusinessman
+            // Step 2: Create businessman with the new company_id
             result = await BusinessModel.createBusinessman({
                 name:          name.trim(),
                 email:         email.toLowerCase().trim(),
@@ -63,9 +61,13 @@ const signup_controller = async (req, res) => {
                 password:      hashedPassword,
                 photo_url:     personalPhoto,
                 company_id:    newCompanyId,
-                company_photo: companyLogo       // new column
+                company_photo: companyLogo
             });
             console.log(`✅ Businessman created with ID: ${result.insertId}`);
+
+            // Step 3: Now update company with admin_id = the new businessman's id
+            await CompanyModel.setAdmin(newCompanyId, result.insertId);
+            console.log(`✅ Company admin_id set to: ${result.insertId}`);
 
         } else {
             console.log('💰 Processing Investor registration...');

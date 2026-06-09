@@ -231,6 +231,7 @@ export default function SignUpPage() {
         fd.append('password',      password)
         fd.append('personalPhoto', photoRef.current.files[0])
         try {
+            console.log(fd);
             const res = await signUp(fd)
             if (res.success) navigate('/login')
             else setErrors({ server: res.message })

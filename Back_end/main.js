@@ -5,9 +5,12 @@ const path = require('path');
 
 const signup = require('./router/signup.js');
 const health = require('./router/health.js');
-const getcomp=require('./router/getcomp.js');
+
 const posts=require('./router/posts.js');
 const groups=require('./router/groups.js')
+const companies=require('./router/companies.js')
+const investment_ad=require('./router/investment_ad.js');
+const deal=require('./router/deal.js');
 
 // Middlewares
 app.use(cors());
@@ -20,9 +23,12 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Routes
 app.use( health);
 app.use('/api', signup);
-app.use(getcomp);
+
 app.use(posts);
 app.use(groups);
+app.use(companies);
+app.use(investment_ad);
+app.use(deal);
 
 // Global Error Handler
 app.use((err, req, res, next) => {

@@ -14,14 +14,18 @@ import Newsfeed    from './components/Newsfeed/Newsfeed.jsx'
 import Login       from './components/Auth/Login.jsx'
 import SignUp      from './components/Auth/SignUp.jsx'
 import Profile     from './components/Profile/Profile.jsx'
-import Market      from './components/Market/Market.jsx'
-import Details     from './components/Market/Details.jsx'
+
+
 import Deals       from './components/Deals/Deals.jsx'
 import NotFound    from './components/NotFound/NotFound.jsx'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute.jsx'
 import Groups from './components/Groups,companise/Groups.jsx'
 import Your_group from './components/Groups,companise/Your_group.jsx'
 import Create_group from './components/Groups,companise/Create_group.jsx'
+import Companies from './components/Groups,companise/Companies.jsx'
+import Your_company from './components/Groups,companise/Your_company.jsx'
+import Request_list from './components/Deals/Request_list.jsx'
+
 
 const router = createBrowserRouter([
   {
@@ -51,14 +55,7 @@ const router = createBrowserRouter([
         element: <ProtectedRoute element={<Investment />} allowedRoles={['businessman']} /> 
       },
 
-      { 
-        path: 'market',                         
-        element: <ProtectedRoute element={<Market />} allowedRoles={['investor', 'businessman']} /> 
-      },
-      { 
-        path: 'details/:addId',                  
-        element: <ProtectedRoute element={<Details />} allowedRoles={['investor', 'businessman']} /> 
-      },
+  
 
       { 
         path: 'deals',                            
@@ -74,7 +71,15 @@ const router = createBrowserRouter([
       { path: '*', element: <NotFound /> },
       {path:'/groups',element:<Groups/>},
       {path:'/your-groups',element:<Your_group/>},
-      {path:'/create-group',element:<Create_group/>}
+      {path:'/create-group',element:<Create_group/>},
+
+      {path:'/companies',element:<Companies/>},
+      {path:'/your-company',element:<Your_company/>},
+      {
+        path:'/requestlist/:ad_id',element:<Request_list/>
+      }
+      
+  
     ]
   }
 ])
