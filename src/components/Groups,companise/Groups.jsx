@@ -314,7 +314,7 @@ export default function Groups() {
 
                             <motion.button
                               whileHover={{ x: 3 }}
-                              onClick={() => navigate(`/groups/${slugify(group.name)}`)}
+                              onClick={() => navigate(`/groups/${group.id}`)}
                               className="flex items-center gap-2 px-4 py-3 text-green-700 font-black text-xs uppercase tracking-wider bg-green-50 rounded-xl hover:bg-green-700 hover:text-white transition-all"
                             >
                               <span>Visit</span>
@@ -350,7 +350,7 @@ export default function Groups() {
                           </button>
 
                           <button
-                            onClick={() => navigate(`/groups/${slugify(group.name)}`)}
+                            onClick={() => navigate(`/groups/${group.id}`)}
                             className="px-6 py-4 bg-green-50 text-green-700 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-green-700 hover:text-white transition-all flex items-center gap-2"
                           >
                             <span>Enter Workspace</span>

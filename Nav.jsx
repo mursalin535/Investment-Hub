@@ -3,47 +3,91 @@ import { useState } from "react";
 import { Menu, X, LogOut } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { clearCookie } from "./src/store/CookieSlice";
+import { logout } from "./src/server/auth_server";
+
 
 export default function Nav({ children }) {
   const [isOpen, setIsOpen] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
   
   const { loggedIn, user } = useSelector((state) => state.cookie);
+  const role=user.role;
 
-  // Determine navigation links based on login status and user role
-  const getNavLinks = () => {
+ const getNavLinks = () => {
+
     if (!loggedIn) {
-      // Not logged in - only Home
-      return [
-        { name: "Home", path: "/" },
-        {name:"About", path:"/about"}
-      ];
+
+        return [
+            {
+                name: "Home",
+                path: "/"
+            },
+            {
+                name: "About",
+                path: "/about"
+            }
+        ];
     }
 
-    // Logged in - always include these
-    const baseLinks = [
-      { name: "Home", path: "/" },
-      { name: "News Feed", path: "/newsfeed" },
-      { name: "Market", path: "/market" },
-      { name: "Deals", path: "/deals" },
-      {name:"Companies",path:'companies'},
-      {name:"Groups",path:'/groups'}
+    const links = [
+        {
+            name: "Home",
+            path: "/"
+        },
+        {
+            name: "News Feed",
+            path: "/newsfeed"
+        },
+        {
+            name: "Deals",
+            path: "/deals"
+        }
     ];
 
-    // Add Investment only for businessman
-    if (user?.role === "businessman") {
-      baseLinks.splice(3, 0, { name: "Investment", path: "/investment" });
+    // Investor links
+    if (role === "investor") {
+
+        links.push(
+            {
+                name: "Groups",
+                path: "/groups"
+            },
+            {
+                name: "Your Groups",
+                path: "/your-groups"
+            }
+        );
     }
 
-    return baseLinks;
-  };
+    // Businessman links
+    if (role === "businessman") {
+
+        links.push(
+            {
+                name: "Investment",
+                path: "/investment"
+            },
+            {
+                name: "Companies",
+                path: "/companies"
+            },
+            {
+                name: "Your Company",
+                path: "/your-company"
+            }
+        );
+    }
+
+    return links;
+};
 
   const navLinks = getNavLinks();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await logout();
     dispatch(clearCookie());
-    console.log("User logged out");
     setIsOpen(false);
     navigate("/");
   };

@@ -13,12 +13,12 @@ const BusinessModel = {
 
     // ✅ FIX 3: Insert company_photo into businessmen table
     createBusinessman: async (userData) => {
-        const { name, email, phone, password, photo_url, company_id, company_photo } = userData;
+        const { name, email, phone, password, photo_url, company_id, company_photo, nid_number } = userData;
         const sql = `
-            INSERT INTO businessmen (name, email, phone, pass, photo_url, company_id, company_photo)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO businessmen (name, email, phone, pass, photo_url, company_id, company_photo, nid_number)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
-        const [result] = await db.execute(sql, [name, email, phone, password, photo_url, company_id, company_photo]);
+        const [result] = await db.execute(sql, [name, email, phone, password, photo_url, company_id, company_photo, nid_number || null]);
         return result;
     }
 };

@@ -5,6 +5,7 @@ export default async function Login_server(userData) {
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: userData
         })
         const data = await resp.json()

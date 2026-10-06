@@ -3,11 +3,11 @@ const DealRequest = require('../model/deal_request_model');
 const deal_controller = {
 
     SendingReq: async (req, res) => {
-        const { id, ad_id, role } = req.body;
+        const { id, ad_id, role, investment_type, group_id } = req.body;
         try {
             let result;
             if (role === 'investor') {
-                result = await DealRequest.RequestAsInvestor({ id, ad_id });
+                result = await DealRequest.RequestAsInvestor({ id, ad_id, investment_type, group_id });
             } else if (role === 'businessman') {
                 result = await DealRequest.RequestAsBusinessman({ id, ad_id });
             } else {
@@ -31,24 +31,38 @@ const deal_controller = {
         }
     },
 
-    // --- COMPLETED METHOD ---
     Requestlist: async (req, res) => {
         try {
-            const { ad_id } = req.params; // Fixed: removed illegal parenthesis
-            const data = await DealRequest.Requestlist(ad_id);
-            return res.json({
-                success: true,
-                data: data
-            });
+            const { ad_id } = req.params;
+            const { requests, adInfo } = await DealRequest.Requestlist(ad_id);
+            return res.json({ success: true, data: requests, adInfo });
         } catch (err) {
-            console.log("error occurred in controller:", err);
-            return res.status(500).json({
-                success: false,
-                message: "Internal server error",
-                data: []
-            });
+            console.log('error occurred in controller:', err);
+            return res.status(500).json({ success: false, message: 'Internal server error', data: [], adInfo: null });
         }
-    }
+    },
+
+    UpdateStatus: async (req, res) => {
+        try {
+            const { request_id, status } = req.body;
+            const result = await DealRequest.UpdateStatus({ request_id, status });
+            return res.json({ success: true, data: result });
+        } catch (err) {
+            console.log('error occurred in controller:', err);
+            return res.status(500).json({ success: false, message: 'Internal server error' });
+        }
+    },
+
+    AcceptRequest: async (req, res) => {
+        try {
+            const { request_id, ad_id } = req.body;
+            const result = await DealRequest.AcceptAndRejectRest({ request_id, ad_id });
+            return res.json({ success: true, data: result });
+        } catch (err) {
+            console.log('error occurred in controller:', err);
+            return res.status(500).json({ success: false, message: 'Internal server error' });
+        }
+    },
 };
 
 module.exports = deal_controller;

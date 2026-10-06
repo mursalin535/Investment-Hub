@@ -159,7 +159,7 @@ export default function Your_group_admin({ groups, onRefetch }) {
                                         <div className="flex flex-wrap gap-3">
                                             <motion.button
                                                 whileHover={{ scale: 1.05 }}
-                                                onClick={() => navigate(`/groups/${slugify(group.name)}`)}
+                                                onClick={() => navigate(`/groups/${group.id}`)}
                                                 className="flex items-center gap-3 px-8 py-4 bg-green-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-green-900/10 hover:bg-green-800 transition-all"
                                             >
                                                 <ExternalLink size={16} />

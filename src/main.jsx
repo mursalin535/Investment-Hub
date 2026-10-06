@@ -25,6 +25,8 @@ import Create_group from './components/Groups,companise/Create_group.jsx'
 import Companies from './components/Groups,companise/Companies.jsx'
 import Your_company from './components/Groups,companise/Your_company.jsx'
 import Request_list from './components/Deals/Request_list.jsx'
+import Group_visit from './components/Visit/Group_visit.jsx'
+import SessionRestore from './components/SessionRestore/SessionRestore.jsx'
 
 
 const router = createBrowserRouter([
@@ -69,14 +71,17 @@ const router = createBrowserRouter([
 
       // ── 404 Catch-all (must be last) ────────────────────────────────────
       { path: '*', element: <NotFound /> },
-      {path:'/groups',element:<Groups/>},
-      {path:'/your-groups',element:<Your_group/>},
-      {path:'/create-group',element:<Create_group/>},
+      {path:'/groups',element: <ProtectedRoute element={<Groups/>} allowedRoles={['investor']} /> },
+      {path:'/your-groups',element: <ProtectedRoute element={<Your_group/>} allowedRoles={['investor']} /> },
+      {path:'/create-group',element: <ProtectedRoute element={<Create_group/>} allowedRoles={['investor']} /> },
 
-      {path:'/companies',element:<Companies/>},
-      {path:'/your-company',element:<Your_company/>},
+      {path:'/companies',element: <ProtectedRoute element={<Companies/>} allowedRoles={['businessman']} /> },
+      {path:'/your-company',element: <ProtectedRoute element={<Your_company/>} allowedRoles={['businessman']} /> },
       {
-        path:'/requestlist/:ad_id',element:<Request_list/>
+        path:'/requestlist/:ad_id',element: <ProtectedRoute element={<Request_list/>} allowedRoles={['businessman']} /> 
+      },
+      {
+        path:'groups/:groupId',element: <ProtectedRoute element={<Group_visit/>} allowedRoles={['investor', 'businessman']} /> 
       }
       
   
@@ -88,7 +93,9 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Provider store={store}>
       <HeroUIProvider>
-        <RouterProvider router={router} />
+        <SessionRestore>
+          <RouterProvider router={router} />
+        </SessionRestore>
       </HeroUIProvider>
     </Provider>
   </StrictMode>

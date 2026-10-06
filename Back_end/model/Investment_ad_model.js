@@ -2,12 +2,12 @@ const db = require('../DataBase/Database');
 
 class Investment_ad_model {
 
-    async addInvestmentAd({ company_id, businessman_id, amount_needed, pitch, last_month_sale, last_year_sale, total_sale, thumbnail_url }) {
+    async addInvestmentAd({ company_id, businessman_id, amount_needed, pitch, last_month_sale, last_year_sale, total_sale, thumbnail_url, profit_percentage, profit_deadline }) {
         const [result] = await db.execute(`
             INSERT INTO investment_ads
-                (company_id, businessman_id, amount_needed, pitch, last_month_sale, last_year_sale, total_sale, thumbnail_url)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `, [company_id, businessman_id, amount_needed, pitch, last_month_sale, last_year_sale, total_sale, thumbnail_url]);
+                (company_id, businessman_id, amount_needed, pitch, last_month_sale, last_year_sale, total_sale, thumbnail_url, profit_percentage, profit_deadline)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [company_id, businessman_id, amount_needed, pitch, last_month_sale, last_year_sale, total_sale, thumbnail_url, profit_percentage || null, profit_deadline || null]);
         return result;
     }
 
@@ -22,6 +22,8 @@ class Investment_ad_model {
                 ia.last_year_sale,
                 ia.total_sale,
                 ia.thumbnail_url,
+                ia.profit_percentage,
+                ia.profit_deadline,
 
                 b.id                 AS businessman_id,
                 b.name               AS businessman_name,

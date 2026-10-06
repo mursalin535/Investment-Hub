@@ -20,6 +20,8 @@ export default function AskingForm() {
     last_year_sale:   '',
     total_sale:       '',
     thumbnail:        null,
+    profit_percentage: '',
+    profit_deadline:  '',
   })
 
   const [preview,   setPreview]   = useState(null)
@@ -52,6 +54,8 @@ export default function AskingForm() {
     fd.append('last_month_sale',formData.last_month_sale)
     fd.append('last_year_sale', formData.last_year_sale)
     fd.append('total_sale',     formData.total_sale)
+    fd.append('profit_percentage', formData.profit_percentage)
+    fd.append('profit_deadline',  formData.profit_deadline)
     if (formData.thumbnail) fd.append('thumbnail', formData.thumbnail)
 
       Investment_add(fd).then((result)=>{
@@ -163,6 +167,7 @@ export default function AskingForm() {
             <div className="space-y-4">
               {[
                 { icon: <DollarSign size={16}/>,    label: 'Amount Needed',     desc: 'How much capital you are seeking' },
+                { icon: <TrendingUp size={16}/>,   label: 'Profit Terms',      desc: 'Profit percentage & deadline' },
                 { icon: <MessageSquare size={16}/>, label: 'Your Pitch',        desc: 'Convince investors in your own words' },
                 { icon: <BarChart size={16}/>,      label: 'Sales Metrics',     desc: 'Last month, last year & total sales' },
                 { icon: <ImageIcon size={16}/>,     label: 'Thumbnail',         desc: 'A cover image for your ad' },
@@ -241,6 +246,48 @@ export default function AskingForm() {
                 <InputField icon={<ArrowRight size={18}/>} label="Amount Needed (৳)"
                   name="amount_needed" type="number" placeholder="e.g. 5000000"
                   value={formData.amount_needed} onChange={handleChange} />
+              </div>
+            </div>
+
+            {/* ── PROFIT TERMS ── */}
+            <div className="pt-10 border-t border-slate-100">
+              <SectionHeader icon={<TrendingUp size={20}/>} title="Profit Terms" sub="Define your profit sharing & timeline" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                <div className="flex flex-col gap-3 group">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                    <span className="opacity-50 group-focus-within:opacity-100 transition-opacity"><TrendingUp size={18} /></span>
+                    Profit Percentage
+                  </label>
+                  <select name="profit_percentage"
+                    className="w-full px-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-[1.5rem]
+                               focus:bg-white focus:border-emerald-500/30 focus:ring-8 focus:ring-emerald-500/5
+                               outline-none transition-all duration-500 text-slate-800 font-medium text-base appearance-none cursor-pointer"
+                    value={formData.profit_percentage} onChange={handleChange} required>
+                    <option value="">Select profit %</option>
+                    <option value="7">7% Profit</option>
+                    <option value="10">10% Profit</option>
+                    <option value="12">12% Profit</option>
+                    <option value="15">15% Profit</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-3 group">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2 transition-colors group-focus-within:text-emerald-600">
+                    <span className="opacity-50 group-focus-within:opacity-100 transition-opacity"><Activity size={18} /></span>
+                    Max Deadline for Profit
+                  </label>
+                  <select name="profit_deadline"
+                    className="w-full px-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-[1.5rem]
+                               focus:bg-white focus:border-emerald-500/30 focus:ring-8 focus:ring-emerald-500/5
+                               outline-none transition-all duration-500 text-slate-800 font-medium text-base appearance-none cursor-pointer"
+                    value={formData.profit_deadline} onChange={handleChange} required>
+                    <option value="">Select deadline</option>
+                    <option value="1 month">1 Month</option>
+                    <option value="3 months">3 Months</option>
+                    <option value="6 months">6 Months</option>
+                    <option value="1 year">1 Year</option>
+                    <option value="2 years">2 Years</option>
+                  </select>
+                </div>
               </div>
             </div>
 

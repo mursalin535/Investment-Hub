@@ -5,12 +5,14 @@ import PostCard from './PostCard';
 import CreatePost from './CreatePost';
 import { Spinner } from "@heroui/react";
 import { motion } from 'framer-motion';
+import { getUser } from '../../store/CookieSlice';
 
 const Newsfeed = () => {
     const dispatch = useDispatch();
     const posts = useSelector(selectPosts);
     const loading = useSelector(selectLoading);
     const error = useSelector(selectError);
+    const user = useSelector(getUser);
 
     useEffect(() => {
         dispatch(fetchPosts());

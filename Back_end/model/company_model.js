@@ -56,6 +56,15 @@ const CompanyModel = {
   
 
     // ============================================
+    //            SET ADMIN FOR COMPANY
+    // ============================================
+    setAdmin: async (companyId, adminId) => {
+        const sql = 'UPDATE companies SET admin_id = ? WHERE id = ?';
+        const [result] = await db.execute(sql, [adminId, companyId]);
+        return result.affectedRows;
+    },
+
+    // ============================================
     //            UPDATE COMPANY STATS
     // ============================================
     updateStats: async (id, deals, profit) => {

@@ -21,12 +21,12 @@ const SignupModel = {
 
     // Insert new investor into database
     createInvestor: async (userData) => {
-        const { name, email, phone, password, photo_url } = userData;
+        const { name, email, phone, password, photo_url, nid_number } = userData;
         const sql = `
-            INSERT INTO investors (name, email, phone, pass, photo_url) 
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO investors (name, email, phone, pass, photo_url, nid_number) 
+            VALUES (?, ?, ?, ?, ?, ?)
         `;
-        const [result] = await db.execute(sql, [name, email, phone, password, photo_url]);
+        const [result] = await db.execute(sql, [name, email, phone, password, photo_url, nid_number || null]);
         return result;
     }
 };

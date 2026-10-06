@@ -1,7 +1,7 @@
 // ✅ Get all groups
 export async function group_server() {
     try {
-        const res = await fetch('http://localhost:5009/groups');
+        const res = await fetch('http://localhost:5009/groups', { credentials: 'include' });
         const data = await res.json();  // ✅ Added await
         return data;
     } catch (err) {
@@ -13,7 +13,7 @@ export async function group_server() {
 // ✅ Get user's own groups
 export async function group_server_your_group(userId) {
     try {
-        const res = await fetch(`http://localhost:5009/groups/yourgroup/${userId}`);
+        const res = await fetch(`http://localhost:5009/groups/yourgroup/${userId}`, { credentials: 'include' });
         const data = await res.json();  // ✅ Added await
         return data;
     } catch (err) {
@@ -34,7 +34,8 @@ export async function group_server_create(name, photoFile, adminId) {
 
         const res = await fetch(`http://localhost:5009/groups/create`, {
             method: 'POST',
-            body: formData
+            body: formData,
+            credentials: 'include',
             // Note: Don't set Content-Type header, browser will set it automatically with boundary
         });
         const data = await res.json();

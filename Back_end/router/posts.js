@@ -19,8 +19,9 @@ const upload = multer({
     limits: { fileSize: 5 * 1024 * 1024 }
 })
 
-router.get('/posts',             posts_controller.getAllPosts)
-router.post('/posts',            upload.single('photo'), posts_controller.createPost)
-router.patch('/posts/:id/like',  posts_controller.likePost)
+router.get('/posts',                  posts_controller.getPublicPosts)
+router.get('/posts/group/:group_id',  posts_controller.getGroupPosts)
+router.post('/posts',                 upload.single('photo'), posts_controller.createPost)
+router.patch('/posts/:id/like',       posts_controller.likePost)
 
 module.exports = router

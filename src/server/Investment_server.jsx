@@ -2,7 +2,8 @@ export async function Investment_add(formData) {
     try {
         const res  = await fetch('http://localhost:5009/investment/add', {
             method: 'POST',
-            body: formData
+            body: formData,
+            credentials: 'include',
         });
         const data = await res.json();
         return data;
@@ -14,7 +15,7 @@ export async function Investment_add(formData) {
 
 export async function getInvestmentAdds() {
     try {
-        const res  = await fetch('http://localhost:5009/investment/get');
+        const res  = await fetch('http://localhost:5009/investment/get', { credentials: 'include' });
         const data = await res.json();
         return data;
     } catch (err) {

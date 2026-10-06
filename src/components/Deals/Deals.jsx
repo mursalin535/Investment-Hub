@@ -4,12 +4,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     DollarSign, TrendingUp, BarChart3, Briefcase,
     ArrowRight, Search, LayoutGrid, List, Zap,
-    Building2, User, BadgeCheck, ClipboardList
+    Building2, User, BadgeCheck, ClipboardList, Download,
+    Users, UserCheck, X, Eye
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { getUser } from '../../store/CookieSlice';
 import { SendingReq, GetReqStatus } from '../../server/Deal_server';
+import { generateContract } from './generateContract';
+import { group_server_your_group } from '../../server/Group_server';
+import { GetParticipants } from '../../server/group_investment_server';
+import CountdownTimer from './CountdownTimer';
+import { getFeedbackByAd } from '../../server/deal_feedback_server';
 
 const BASE = 'http://localhost:5009/uploads/';
 
@@ -61,19 +67,87 @@ function StatusBadge({ status, dark = false }) {
 
 const statusColors = { yellow: 'bg-yellow-500', green: 'bg-green-500', red: 'bg-red-500' };
 
-// Unified CTA — handles both roles and both layout modes
-function CardCta({ ad, user, reqStatus, onSendReq, navigate, list = false }) {
+function FeedbackDetailsButton({ adId, base, motionBase }) {
+    const [open, setOpen] = useState(false);
+    const [feedback, setFeedback] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+    const handleOpen = async () => {
+        setOpen(true);
+        if (!feedback) {
+            setLoading(true);
+            try {
+                const data = await getFeedbackByAd(adId);
+                setFeedback(data);
+            } catch (e) { console.error(e); }
+            setLoading(false);
+        }
+    };
+
+    return (
+        <>
+            <motion.button whileHover={{ x: 3 }}
+                onClick={handleOpen}
+                className={`${motionBase} bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 ${base}`}
+            >
+                <Eye size={13} /> Details
+            </motion.button>
+            {open && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+                    onClick={() => setOpen(false)}>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white rounded-[2rem] p-8 max-w-lg w-full shadow-2xl"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-black text-slate-900">Businessman Feedback</h3>
+                            <button onClick={() => setOpen(false)} className="p-2 hover:bg-slate-100 rounded-xl">
+                                <X size={18} />
+                            </button>
+                        </div>
+                        {loading ? (
+                            <div className="py-12 text-center">
+                                <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                            </div>
+                        ) : feedback ? (
+                            <div className="space-y-4">
+                                <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Outcome Report</p>
+                                    <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{feedback.feedback_text}</p>
+                                </div>
+                                <p className="text-[10px] text-slate-400 text-right">
+                                    Submitted: {new Date(feedback.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="py-12 text-center">
+                                <p className="text-slate-400 font-bold">No feedback submitted yet</p>
+                                <p className="text-sm text-slate-300 mt-1">The businessman hasn't submitted the outcome report yet.</p>
+                            </div>
+                        )}
+                    </motion.div>
+                </div>
+            )}
+        </>
+    );
+}
+
+function CardCta({ ad, user, reqStatus, requestInfo, onOpenModal, navigate, list = false }) {
     const base = list
         ? 'px-6 py-4 font-black text-xs uppercase rounded-2xl flex-shrink-0'
         : 'w-full py-3.5 font-black text-xs uppercase rounded-2xl';
 
-    const isOwner = user.role === 'businessman' && ad.businessman_id == user.id;
+    const motionBase = `flex items-center gap-2 justify-center tracking-widest transition-all`;
 
-    if (isOwner) {
+    // ── Businessman: only their own ad ───────────────────────────────────
+    if (user.role === 'businessman') {
+        if (ad.businessman_id != user.id) return null;
         return (
             <motion.button whileHover={{ x: list ? 3 : 4 }}
-                className={`flex items-center gap-2 justify-center bg-slate-900 hover:bg-slate-700
-                            text-white tracking-widest transition-all shadow-lg shadow-slate-900/20 ${base}`}
+                className={`${motionBase} bg-slate-900 hover:bg-slate-700 text-white
+                            shadow-lg shadow-slate-900/20 ${base}`}
                 onClick={() => navigate(`/requestlist/${ad.ad_id}`)}
             >
                 <ClipboardList size={13} />
@@ -82,16 +156,70 @@ function CardCta({ ad, user, reqStatus, onSendReq, navigate, list = false }) {
         );
     }
 
-    // Not owner (investor OR businessman viewing someone else's ad)
-    if (reqStatus === 'pending')  return <button disabled className={`${base} ${statusColors.yellow} text-white`}>Pending Request</button>;
-    if (reqStatus === 'accepted') return <button disabled className={`${base} ${statusColors.green}  text-white`}>Accepted</button>;
-    if (reqStatus === 'rejected') return <button disabled className={`${base} ${statusColors.red}    text-white`}>Rejected</button>;
+    // ── Investor ─────────────────────────────────────────────────────────
+    if (reqStatus === 'pending') {
+        return <button disabled className={`${base} ${statusColors.yellow} text-white`}>Pending Request</button>;
+    }
 
+    if (reqStatus === 'rejected') {
+        return <button disabled className={`${base} ${statusColors.red} text-white`}>Rejected</button>;
+    }
+
+    if (reqStatus === 'accepted') {
+        return (
+            <div className={`flex ${list ? 'flex-row gap-3 items-center' : 'flex-col gap-2'}`}>
+                <button disabled className={`${base} ${statusColors.green} text-white`}>
+                    Accepted
+                </button>
+                {ad.profit_deadline && (
+                    <div className={`${base} bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center`}>
+                        <CountdownTimer deadline={ad.profit_deadline} compact />
+                    </div>
+                )}
+                <motion.button whileHover={{ x: list ? 3 : 4 }}
+                    onClick={async () => {
+                        let participants = null;
+                        let investmentType = requestInfo?.investment_type || 'individual';
+                        if (investmentType === 'group' && requestInfo?.request_id) {
+                            try {
+                                participants = await GetParticipants(requestInfo.request_id);
+                            } catch (e) { console.error(e); }
+                        }
+                        const ok = generateContract({
+                            ad,
+                            businessman: {
+                                name:  ad.businessman_name,
+                                email: ad.businessman_email,
+                                phone: ad.businessman_phone,
+                            },
+                            investor: {
+                                name:             user.name,
+                                email:            user.email,
+                                phone:            user.phone,
+                                total_investment: user.total_investment,
+                                total_profit:     user.total_profit,
+                            },
+                            participants,
+                            investmentType,
+                        });
+                        if (!ok) alert('Failed to generate contract. Check console for details.');
+                    }}
+                    className={`${motionBase} bg-slate-900 hover:bg-slate-700 text-white
+                                shadow-lg shadow-slate-900/20 ${base}`}
+                >
+                    <Download size={13} /> Contract
+                </motion.button>
+                <FeedbackDetailsButton adId={ad.ad_id} base={base} motionBase={motionBase} />
+            </div>
+        );
+    }
+
+    // default: no request yet
     return (
         <motion.button whileHover={{ x: list ? 3 : 4 }}
-            className={`flex items-center gap-2 justify-center bg-emerald-500 hover:bg-emerald-600
-                        text-white tracking-widest transition-all shadow-md shadow-emerald-500/20 ${base}`}
-            onClick={(e) => onSendReq(e, ad.ad_id)}
+            className={`${motionBase} bg-emerald-500 hover:bg-emerald-600 text-white
+                        shadow-md shadow-emerald-500/20 ${base}`}
+            onClick={(e) => { e.stopPropagation(); onOpenModal(ad.ad_id); }}
         >
             Send Request <ArrowRight size={13} />
         </motion.button>
@@ -106,14 +234,21 @@ export default function Deals() {
     const [search, setSearch]     = useState('');
     const [viewMode, setViewMode] = useState('grid');
     const [requests, setRequests] = useState([]);
+    const [groups, setGroups]     = useState([]);
     const user     = useSelector(getUser);
     const navigate = useNavigate();
+
+    // Modal state
+    const [modalOpen, setModalOpen]       = useState(false);
+    const [modalAdId, setModalAdId]       = useState(null);
+    const [investType, setInvestType]     = useState('individual');
+    const [selectedGroup, setSelectedGroup] = useState('');
+    const [sending, setSending]           = useState(false);
 
     useEffect(() => {
         getInvestmentAdds()
             .then((data) => {
                 setAds(data?.success ? data.data : []);
-                console.log(data);
             })
             .catch(console.log)
             .finally(() => setLoading(false));
@@ -121,13 +256,44 @@ export default function Deals() {
         GetReqStatus(user.id, user.role)
             .then((data) => { if (data?.success) setRequests(data.data); })
             .catch(console.log);
+
+        if (user.role === 'investor') {
+            group_server_your_group(user.id)
+                .then((data) => { if (data?.success) setGroups(data.data || []); })
+                .catch(console.log);
+        }
     }, []);
 
-    async function handleSendingReq(e, id) {
+    function openModal(adId) {
+        setModalAdId(adId);
+        setInvestType('individual');
+        setSelectedGroup('');
+        setModalOpen(true);
+    }
+
+    function closeModal() {
+        setModalOpen(false);
+        setModalAdId(null);
+    }
+
+    async function handleSendingReq() {
+        if (!modalAdId) return;
+        setSending(true);
         try {
-            const res = await SendingReq({ id: user.id, ad_id: id, role: user.role });
-            if (res.success) setRequests(prev => [...prev, { add_id: id, status: 'pending' }]);
+            const payload = {
+                id: user.id,
+                ad_id: modalAdId,
+                role: user.role,
+                investment_type: investType,
+                group_id: investType === 'group' ? selectedGroup : null,
+            };
+            const res = await SendingReq(payload);
+            if (res.success) {
+                setRequests(prev => [...prev, { add_id: modalAdId, status: 'pending' }]);
+                closeModal();
+            }
         } catch (err) { console.log(err); }
+        finally { setSending(false); }
     }
 
     const filtered = ads.filter(ad =>
@@ -136,6 +302,7 @@ export default function Deals() {
     );
 
     const requestMap = Object.fromEntries(requests.map(r => [r.add_id, r.status]));
+    const requestInfoMap = Object.fromEntries(requests.map(r => [r.add_id, r]));
 
     if (loading) return (
         <div className="w-full min-h-screen flex items-center justify-center bg-[#F9FAFB]">
@@ -174,7 +341,7 @@ export default function Deals() {
                     >
                         Investment<br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-400 italic font-serif pr-4">
-                            {user.id}
+                            Deals
                         </span>
                     </motion.h1>
 
@@ -238,8 +405,9 @@ export default function Deals() {
                     >
                         {filtered.map((ad, i) => {
                             const reqStatus = requestMap[ad.ad_id];
+                            const requestInfo = requestInfoMap[ad.ad_id];
                             const isGrid    = viewMode === 'grid';
-                            const ctaProps  = { ad, user, reqStatus, onSendReq: handleSendingReq, navigate };
+                            const ctaProps  = { ad, user, reqStatus, requestInfo, onOpenModal: openModal, navigate };
 
                             return (
                                 <motion.div key={ad.ad_id} custom={i} variants={cardVariants}
@@ -359,6 +527,155 @@ export default function Deals() {
                     </motion.div>
                 )}
             </section>
+
+            {/* ── INVESTMENT TYPE MODAL ── */}
+            <AnimatePresence>
+                {modalOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+                        onClick={closeModal}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                            className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            {/* Modal Header */}
+                            <div className="relative bg-slate-900 px-8 py-6">
+                                <button onClick={closeModal}
+                                    className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
+                                    <X size={16} className="text-white" />
+                                </button>
+                                <h3 className="text-xl font-black text-white">Investment Type</h3>
+                                <p className="text-slate-400 text-sm mt-1">Choose how you want to invest in this opportunity</p>
+                            </div>
+
+                            {/* Options */}
+                            <div className="p-8 space-y-4">
+                                {/* Individual */}
+                                <button
+                                    onClick={() => { setInvestType('individual'); setSelectedGroup(''); }}
+                                    className={`w-full flex items-center gap-4 p-5 rounded-2xl border-2 transition-all duration-200 text-left
+                                        ${investType === 'individual'
+                                            ? 'border-emerald-500 bg-emerald-50 shadow-md shadow-emerald-500/10'
+                                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'}`}
+                                >
+                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors
+                                        ${investType === 'individual' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                        <UserCheck size={22} />
+                                    </div>
+                                    <div>
+                                        <p className={`font-bold text-sm ${investType === 'individual' ? 'text-emerald-700' : 'text-slate-800'}`}>
+                                            Invest Individually
+                                        </p>
+                                        <p className="text-slate-400 text-xs mt-0.5">
+                                            Invest on your own behalf, no group involvement
+                                        </p>
+                                    </div>
+                                    <div className={`ml-auto w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0
+                                        ${investType === 'individual' ? 'border-emerald-500' : 'border-slate-300'}`}>
+                                        {investType === 'individual' && (
+                                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                                        )}
+                                    </div>
+                                </button>
+
+                                {/* Group */}
+                                <button
+                                    onClick={() => setInvestType('group')}
+                                    className={`w-full flex items-center gap-4 p-5 rounded-2xl border-2 transition-all duration-200 text-left
+                                        ${investType === 'group'
+                                            ? 'border-blue-500 bg-blue-50 shadow-md shadow-blue-500/10'
+                                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'}`}
+                                >
+                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors
+                                        ${investType === 'group' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                        <Users size={22} />
+                                    </div>
+                                    <div>
+                                        <p className={`font-bold text-sm ${investType === 'group' ? 'text-blue-700' : 'text-slate-800'}`}>
+                                            Invest as Group
+                                        </p>
+                                        <p className="text-slate-400 text-xs mt-0.5">
+                                            Invest through one of your groups
+                                        </p>
+                                    </div>
+                                    <div className={`ml-auto w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0
+                                        ${investType === 'group' ? 'border-blue-500' : 'border-slate-300'}`}>
+                                        {investType === 'group' && (
+                                            <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                                        )}
+                                    </div>
+                                </button>
+
+                                {/* Group selector */}
+                                <AnimatePresence>
+                                    {investType === 'group' && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: 'auto' }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="pt-2 space-y-2">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                                    Select Group
+                                                </label>
+                                                {groups.length > 0 ? (
+                                                    <select
+                                                        value={selectedGroup}
+                                                        onChange={e => setSelectedGroup(e.target.value)}
+                                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm text-slate-800 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/10 transition-all"
+                                                    >
+                                                        <option value="">Choose a group...</option>
+                                                        {groups.map(g => (
+                                                            <option key={g.id} value={g.id}>{g.name}</option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <div className="text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                                                        <Users size={24} className="mx-auto text-slate-300 mb-2" />
+                                                        <p className="text-sm text-slate-400">No groups found</p>
+                                                        <p className="text-xs text-slate-300 mt-1">Create a group first to invest together</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="px-8 pb-8 flex gap-3">
+                                <button onClick={closeModal}
+                                    className="flex-1 py-3.5 rounded-xl border border-slate-200 text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-colors">
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSendingReq}
+                                    disabled={sending || (investType === 'group' && !selectedGroup)}
+                                    className="flex-1 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest shadow-md shadow-emerald-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    {sending ? (
+                                        <motion.span animate={{ rotate: 360 }}
+                                            transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                                            className="w-4 h-4 border-2 border-white border-t-transparent rounded-full inline-block"
+                                        />
+                                    ) : (
+                                        <>Send Request <ArrowRight size={13} /></>
+                                    )}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

@@ -26,7 +26,8 @@ const investment_ad_controller = {
             try {
                 const {
                     company_id, businessman_id, amount_needed,
-                    pitch, last_month_sale, last_year_sale, total_sale
+                    pitch, last_month_sale, last_year_sale, total_sale,
+                    profit_percentage, profit_deadline
                 } = req.body;
 
                 const thumbnail_url = req.file?.filename || null;
@@ -34,7 +35,7 @@ const investment_ad_controller = {
                 const result = await Investment_ad_model.addInvestmentAd({
                     company_id, businessman_id, amount_needed,
                     pitch, last_month_sale, last_year_sale,
-                    total_sale, thumbnail_url
+                    total_sale, thumbnail_url, profit_percentage, profit_deadline
                 });
 
                 res.status(200).json({ success: true, data: result });

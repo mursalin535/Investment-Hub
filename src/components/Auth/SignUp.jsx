@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     Mail, Lock, User, Phone, ArrowRight, ArrowLeft,
     Building2, DollarSign, Camera, Eye, EyeOff,
-    CheckCircle2, XCircle, Loader2, Check, X
+    CheckCircle2, XCircle, Loader2, Check, X, CreditCard
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import signUp from '../../server/server'
+import { verifyNID } from '../../server/nid_server'
  
 // ── Password Rule Engine ──────────────────────────────────────
 const RULES = [
@@ -161,6 +162,7 @@ export default function SignUpPage() {
     const nameRef        = useRef(null)
     const emailRef       = useRef(null)
     const phoneRef       = useRef(null)
+    const nidRef         = useRef(null)
     const photoRef       = useRef(null)
     const companyNameRef = useRef(null)
     const valuationRef   = useRef(null)
@@ -175,12 +177,42 @@ export default function SignUpPage() {
     const [loading,  setLoading]  = useState(false)
     const [errors,   setErrors]   = useState({})
     const [step1Data, setStep1Data] = useState(null)
+    const [nidVerified, setNidVerified] = useState(false)
+    const [nidChecking, setNidChecking] = useState(false)
+    const [nidData, setNidData] = useState(null)
  
     // Photo preview
     const [photoPreview, setPhotoPreview]   = useState(null)
     const [logoPreview,  setLogoPreview]    = useState(null)
  
     const allRulesPassed = RULES.every(r => r.test(password))
+
+    const handleVerifyNID = async () => {
+        const nid = nidRef.current?.value?.trim()
+        if (!nid) {
+            setErrors(prev => ({ ...prev, nid: 'Enter your NID number' }))
+            return
+        }
+        setNidChecking(true)
+        setErrors(prev => ({ ...prev, nid: null }))
+        try {
+            const res = await verifyNID(nid)
+            if (res.success && res.exists) {
+                setNidVerified(true)
+                setNidData(res.data)
+                setErrors(prev => ({ ...prev, nid: null }))
+            } else {
+                setNidVerified(false)
+                setNidData(null)
+                setErrors(prev => ({ ...prev, nid: 'NID not found. You cannot sign up without a valid NID.' }))
+            }
+        } catch {
+            setNidVerified(false)
+            setNidData(null)
+            setErrors(prev => ({ ...prev, nid: 'Could not verify NID. Server unreachable.' }))
+        }
+        setNidChecking(false)
+    }
  
     // ── Validation ──────────────────────────────────────────────
     const validateStep1 = useCallback(() => {
@@ -188,12 +220,14 @@ export default function SignUpPage() {
         if (!nameRef.current?.value.trim())       e.name     = 'Full name is required'
         if (!emailRef.current?.value.includes('@')) e.email   = 'Valid email is required'
         if (!phoneRef.current?.value.trim())       e.phone    = 'Phone number is required'
+        if (!nidRef.current?.value.trim())         e.nid      = 'NID number is required'
+        if (!nidVerified)                          e.nid      = 'NID verification is required'
         if (!allRulesPassed)                        e.password = 'Password does not meet all requirements'
         if (password !== confirm)                   e.confirm  = 'Passwords do not match'
         if (!photoRef.current?.files[0])            e.photo    = 'Profile photo is required'
         setErrors(e)
         return Object.keys(e).length === 0
-    }, [password, confirm, allRulesPassed])
+    }, [password, confirm, allRulesPassed, nidVerified])
  
     const validateStep2 = useCallback(() => {
         const e = {}
@@ -228,6 +262,7 @@ export default function SignUpPage() {
         fd.append('name',          nameRef.current.value.trim())
         fd.append('email',         emailRef.current.value.trim())
         fd.append('phone',         phoneRef.current.value.trim())
+        fd.append('nid_number',    nidRef.current.value.trim())
         fd.append('password',      password)
         fd.append('personalPhoto', photoRef.current.files[0])
         try {
@@ -252,6 +287,7 @@ export default function SignUpPage() {
         fd.append('name',          step1Data.name)
         fd.append('email',         step1Data.email)
         fd.append('phone',         step1Data.phone)
+        fd.append('nid_number',    nidRef.current.value.trim())
         fd.append('password',      step1Data.password)
         fd.append('personalPhoto', step1Data.photo)
         fd.append('companyName',   companyNameRef.current.value.trim())
@@ -268,14 +304,32 @@ export default function SignUpPage() {
         }
     }
  
+    const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+
     const handlePhotoChange = (e) => {
         const file = e.target.files[0]
-        if (file) setPhotoPreview(URL.createObjectURL(file))
+        if (file) {
+            if (file.size > MAX_FILE_SIZE) {
+                setErrors(prev => ({ ...prev, photo: 'File is too large. Maximum size is 10MB.' }))
+                e.target.value = ''
+                return
+            }
+            setErrors(prev => ({ ...prev, photo: null }))
+            setPhotoPreview(URL.createObjectURL(file))
+        }
     }
- 
+  
     const handleLogoChange = (e) => {
         const file = e.target.files[0]
-        if (file) setLogoPreview(URL.createObjectURL(file))
+        if (file) {
+            if (file.size > MAX_FILE_SIZE) {
+                setErrors(prev => ({ ...prev, companyLogo: 'File is too large. Maximum size is 10MB.' }))
+                e.target.value = ''
+                return
+            }
+            setErrors(prev => ({ ...prev, companyLogo: null }))
+            setLogoPreview(URL.createObjectURL(file))
+        }
     }
  
     // ── Render ──────────────────────────────────────────────────
@@ -399,6 +453,42 @@ export default function SignUpPage() {
                                     <Mail className={ico} size={16} />
                                     <input ref={emailRef} type="email" className={base} placeholder="name@email.com" />
                                 </Field>
+
+                                {/* NID Verification */}
+                                <div className="space-y-1">
+                                    <Field label="National ID (NID) Number" error={errors.nid}>
+                                        <CreditCard className={ico} size={16} />
+                                        <input ref={nidRef} className={`${base} ${nidVerified ? 'border-emerald-400 ring-2 ring-emerald-400/10' : ''}`}
+                                            placeholder="e.g. 1010101010101"
+                                            disabled={nidVerified}
+                                        />
+                                        {nidVerified && (
+                                            <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                                                <Check size={15} className="text-emerald-500" />
+                                            </div>
+                                        )}
+                                    </Field>
+                                    {!nidVerified && (
+                                        <button type="button" onClick={handleVerifyNID} disabled={nidChecking}
+                                            className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1.5 mt-1 disabled:opacity-50">
+                                            {nidChecking
+                                                ? <Loader2 size={12} className="animate-spin" />
+                                                : <CheckCircle2 size={12} />
+                                            }
+                                            {nidChecking ? 'Verifying...' : 'Verify NID'}
+                                        </button>
+                                    )}
+                                    {nidVerified && nidData && (
+                                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+                                            className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 space-y-1">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-1">NID Verified</p>
+                                            <p className="text-xs text-slate-700"><strong>Name:</strong> {nidData.name}</p>
+                                            <p className="text-xs text-slate-700"><strong>Father:</strong> {nidData.father_name}</p>
+                                            <p className="text-xs text-slate-700"><strong>DOB:</strong> {nidData.date_of_birth}</p>
+                                            <p className="text-xs text-slate-700"><strong>District:</strong> {nidData.district}, {nidData.division}</p>
+                                        </motion.div>
+                                    )}
+                                </div>
  
                                 {/* Password + Confirm */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -470,6 +560,14 @@ export default function SignUpPage() {
                                     </div>
                                 </Field>
  
+                                {/* Server error */}
+                                {errors.server && (
+                                    <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                                        <XCircle size={15} className="text-red-500 flex-shrink-0" />
+                                        <p className="text-red-600 text-xs font-semibold">{errors.server}</p>
+                                    </div>
+                                )}
+
                                 {/* Submit */}
                                 <button
                                     onClick={handleNext}

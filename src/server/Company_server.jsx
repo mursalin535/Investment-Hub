@@ -1,6 +1,6 @@
 export async function getCompany(){
     try{
-        const res=await fetch('http://localhost:5009/companies');
+        const res=await fetch('http://localhost:5009/companies', { credentials: 'include' });
         const data=await res.json();
         return data;
     }
@@ -13,7 +13,7 @@ export async function getCompany(){
 export async function yourCompany(userId){
     try{
         console.log('inside youCompany server with userId:', userId);
-        const res=await fetch(`http://localhost:5009/companies/yourcompany/${userId}`);
+        const res=await fetch(`http://localhost:5009/companies/yourcompany/${userId}`, { credentials: 'include' });
         console.log('Response from server:', res);
         const data=await res.json();
         console.log('Data from server:', data);

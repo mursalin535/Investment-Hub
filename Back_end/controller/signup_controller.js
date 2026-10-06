@@ -1,8 +1,18 @@
 const SignupModel = require('../model/signup_model.js');
 const BusinessModel = require('../model/business_model.js');
 const CompanyModel = require('../model/company_model.js');
+const SessionModel = require('../model/session_model.js');
 const bcrypt = require('bcrypt');
 const { validationResult, body } = require('express-validator');
+
+const COOKIE_NAME = 'sid';
+const COOKIE_OPTIONS = {
+    httpOnly: true,
+    secure: false,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 7 * 24 * 60 * 60 * 1000
+};
 
 const validateSignup = [
     body('name').trim().notEmpty().withMessage('Name is required'),
@@ -25,7 +35,7 @@ const signup_controller = async (req, res) => {
             return res.status(400).json({ success: false, message: errors.array()[0].msg });
         }
 
-        const { name, email, phone, password, role, companyName, valuation } = req.body;
+        const { name, email, phone, password, role, companyName, valuation, nid_number } = req.body;
         const files = req.files;
 
         const existingInvestor = await SignupModel.findUserByEmail(email);
@@ -61,7 +71,8 @@ const signup_controller = async (req, res) => {
                 password:      hashedPassword,
                 photo_url:     personalPhoto,
                 company_id:    newCompanyId,
-                company_photo: companyLogo
+                company_photo: companyLogo,
+                nid_number:    nid_number || null
             });
             console.log(`✅ Businessman created with ID: ${result.insertId}`);
 
@@ -76,12 +87,18 @@ const signup_controller = async (req, res) => {
                 email:     email.toLowerCase().trim(),
                 phone:     phone.trim(),
                 password:  hashedPassword,
-                photo_url: personalPhoto
+                photo_url: personalPhoto,
+                nid_number: nid_number || null
             });
             console.log(`✅ Investor created with ID: ${result.insertId}`);
         }
 
         console.log('========== SIGNUP PROCESS COMPLETE ==========');
+
+        // Create session and set cookie
+        const { sessionId } = await SessionModel.create(result.insertId, role);
+        res.cookie(COOKIE_NAME, sessionId, COOKIE_OPTIONS);
+
         return res.status(201).json({
             success: true,
             message: 'Account created successfully!',
